@@ -1,0 +1,6 @@
+name = "Bundle Builder"
+type = "theme"
+
+# Theme app extension: merchants add the "Bundle Builder" block to any page
+# (Online Store editor -> Add section -> Apps -> Bundle Builder) and pick a
+# bundle handle. Assets are served from the Shopify CDN automatically.

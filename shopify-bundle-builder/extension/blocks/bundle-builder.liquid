@@ -1,0 +1,90 @@
+{% comment %}
+  Bundle Builder block.
+
+  Direction handling: `dir` is derived from the active locale so Arabic
+  storefronts render fully mirrored without any merchant configuration.
+  All data the widget needs is passed via data-* attributes; the widget
+  fetches the bundle config from the App Proxy (/apps/bundle-builder).
+{% endcomment %}
+
+{%- assign rtl_locales = 'ar,he,fa,ur' | split: ',' -%}
+{%- assign lang = request.locale.iso_code | split: '-' | first -%}
+{%- assign dir = 'ltr' -%}
+{%- if rtl_locales contains lang -%}
+  {%- assign dir = 'rtl' -%}
+{%- endif -%}
+
+<div
+  class="bb-root"
+  id="bundle-builder-{{ block.id }}"
+  dir="{{ dir }}"
+  lang="{{ lang }}"
+  data-bundle-handle="{{ block.settings.bundle_handle | escape }}"
+  data-proxy-base="/apps/bundle-builder"
+  data-locale="{{ lang }}"
+  data-currency="{{ cart.currency.iso_code }}"
+  data-money-format="{{ shop.money_format | escape }}"
+  data-template="{{ block.settings.template }}"
+  style="
+    --bb-accent: {{ block.settings.accent_color }};
+    --bb-text: {{ block.settings.text_color }};
+    --bb-radius: {{ block.settings.corner_radius }}px;
+    --bb-font: {{ block.settings.font_family }};
+    --bb-spacing: {{ block.settings.spacing }}px;
+  "
+>
+  <div class="bb-skeleton" aria-hidden="true">
+    <div class="bb-skeleton__bar"></div>
+    <div class="bb-skeleton__grid">
+      <div class="bb-skeleton__card"></div>
+      <div class="bb-skeleton__card"></div>
+      <div class="bb-skeleton__card"></div>
+    </div>
+  </div>
+  <noscript>{{ 'bundle_builder.noscript' | t }}</noscript>
+</div>
+
+<link rel="stylesheet" href="{{ 'bundle-builder.css' | asset_url }}" media="all">
+<script src="{{ 'bundle-builder.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Bundle Builder",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "bundle_handle",
+      "label": "Bundle handle",
+      "info": "The handle shown in the Bundle Builder admin (e.g. summer-box)"
+    },
+    {
+      "type": "select",
+      "id": "template",
+      "label": "Template",
+      "default": "minimal",
+      "options": [
+        { "value": "minimal", "label": "Minimal" },
+        { "value": "premium", "label": "Premium" },
+        { "value": "box", "label": "Box Builder" }
+      ]
+    },
+    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#111827" },
+    { "type": "color", "id": "text_color", "label": "Text color", "default": "#111827" },
+    { "type": "range", "id": "corner_radius", "label": "Corner radius", "min": 0, "max": 24, "step": 2, "default": 12, "unit": "px" },
+    { "type": "range", "id": "spacing", "label": "Spacing", "min": 8, "max": 32, "step": 2, "default": 16, "unit": "px" },
+    {
+      "type": "select",
+      "id": "font_family",
+      "label": "Font",
+      "default": "inherit",
+      "options": [
+        { "value": "inherit", "label": "Theme font" },
+        { "value": "'Tajawal', sans-serif", "label": "Tajawal (Arabic-optimized)" },
+        { "value": "'Cairo', sans-serif", "label": "Cairo (Arabic-optimized)" },
+        { "value": "'Inter', sans-serif", "label": "Inter" }
+      ]
+    }
+  ]
+}
+{% endschema %}
