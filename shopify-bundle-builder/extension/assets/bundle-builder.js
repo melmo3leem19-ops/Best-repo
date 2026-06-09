@@ -85,13 +85,18 @@
     return node;
   }
 
-  function formatMoney(cents, moneyFormat, locale) {
-    var amount = (cents / 100).toFixed(2);
-    if (moneyFormat) {
-      // Shopify money_format, e.g. "{{amount}} ر.س" or "${{amount}}"
-      return moneyFormat.replace(/\{\{\s*amount[^}]*\}\}/, Number(amount).toLocaleString(locale));
+  function formatMoney(minorUnits, widget) {
+    // currency.factor/decimals come from the server (1000/3 for KWD, 100/2 default)
+    var factor = (widget.currencyInfo && widget.currencyInfo.factor) || 100;
+    var decimals = (widget.currencyInfo && widget.currencyInfo.decimals) || 2;
+    var amount = Number((minorUnits / factor).toFixed(decimals)).toLocaleString(widget.locale, {
+      minimumFractionDigits: decimals
+    });
+    if (widget.moneyFormat) {
+      // Shopify money_format, e.g. "{{amount}} د.ك" or "${{amount}}"
+      return widget.moneyFormat.replace(/\{\{\s*amount[^}]*\}\}/, amount);
     }
-    return Number(amount).toLocaleString(locale);
+    return amount;
   }
 
   function debounce(fn, ms) {
@@ -139,6 +144,7 @@
       .then(function (data) {
         self.bundle = data.bundle;
         self.products = data.products;
+        self.currencyInfo = data.currency || { decimals: 2, factor: 100 };
         self.flowSteps = self.buildFlowSteps();
         self.prefillFixedBundle();
         self.render();
@@ -329,7 +335,7 @@
       sellable.forEach(function (v) {
         var opt = el('option');
         opt.value = v.variantId;
-        opt.textContent = v.title + ' — ' + formatMoney(v.price, self.moneyFormat, self.locale);
+        opt.textContent = v.title + ' — ' + formatMoney(v.price, self);
         variantSelect.appendChild(opt);
       });
       body.appendChild(variantSelect);
@@ -337,12 +343,12 @@
 
     var price = el('p', 'bb-card__price');
     var firstVariant = sellable[0];
-    price.textContent = firstVariant ? formatMoney(firstVariant.price, this.moneyFormat, this.locale) : this.t('out_of_stock');
+    price.textContent = firstVariant ? formatMoney(firstVariant.price, this) : this.t('out_of_stock');
     body.appendChild(price);
     if (variantSelect) {
       variantSelect.addEventListener('change', function () {
         var v = sellable.find(function (x) { return x.variantId === variantSelect.value; });
-        if (v) price.textContent = formatMoney(v.price, self.moneyFormat, self.locale);
+        if (v) price.textContent = formatMoney(v.price, self);
       });
     }
 
@@ -420,7 +426,7 @@
       var name = el('span', 'bb-review__name');
       name.textContent = product.title + (variant.title !== 'Default Title' ? ' — ' + variant.title : '');
       var meta = el('span', 'bb-review__meta');
-      meta.textContent = self.t('qty') + ': ' + s.quantity + ' · ' + formatMoney(variant.price * s.quantity, self.moneyFormat, self.locale);
+      meta.textContent = self.t('qty') + ': ' + s.quantity + ' · ' + formatMoney(variant.price * s.quantity, self);
       info.appendChild(name);
       info.appendChild(meta);
       li.appendChild(info);
@@ -478,12 +484,12 @@
     if (!this.pricing) return;
 
     var total = el('span', 'bb-sticky__total');
-    total.textContent = this.t('total') + ': ' + formatMoney(this.pricing.total, this.moneyFormat, this.locale);
+    total.textContent = this.t('total') + ': ' + formatMoney(this.pricing.total, this);
     s.appendChild(total);
 
     if (this.pricing.discount > 0) {
       var save = el('span', 'bb-sticky__save');
-      save.textContent = this.t('you_save', { amount: formatMoney(this.pricing.discount, this.moneyFormat, this.locale) });
+      save.textContent = this.t('you_save', { amount: formatMoney(this.pricing.discount, this) });
       s.appendChild(save);
     }
     if (this.pricing.freeGifts && this.pricing.freeGifts.length > 0) {
@@ -598,7 +604,7 @@
   /** Fire client-side pixels if the store has them installed. */
   BundleBuilder.prototype.trackPixels = function (data) {
     try {
-      var value = data.pricing.total / 100;
+      var value = data.pricing.total / ((this.currencyInfo && this.currencyInfo.factor) || 100);
       if (typeof window.fbq === 'function') {
         window.fbq('track', 'AddToCart', {
           content_type: 'product_group',

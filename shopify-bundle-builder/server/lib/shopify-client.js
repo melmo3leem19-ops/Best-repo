@@ -124,7 +124,12 @@ class ShopifyClient {
           appliesOncePerCustomer: false,
           customerSelection: { all: true },
           customerGets: {
-            value: { discountAmount: { amount: (amount / 100).toFixed(2), appliesOnEachItem: false } },
+            value: {
+              discountAmount: {
+                amount: (amount / config.minorUnitFactor).toFixed(config.currencyDecimals),
+                appliesOnEachItem: false,
+              },
+            },
             items: variantIds && variantIds.length > 0
               ? { products: { productVariantsToAdd: variantIds.map((id) => `gid://shopify/ProductVariant/${id}`) } }
               : { all: true },
@@ -164,9 +169,9 @@ function gidToId(gid) {
   return String(gid).split('/').pop();
 }
 
-/** "12.50" -> 1250 */
+/** "12.50" -> 1250 (2-decimal currencies); "12.500" -> 12500 (KWD/BHD/OMR with CURRENCY_DECIMALS=3) */
 function toMinorUnits(decimalString) {
-  return Math.round(parseFloat(decimalString) * 100);
+  return Math.round(parseFloat(decimalString) * config.minorUnitFactor);
 }
 
 function sleep(ms) {

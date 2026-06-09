@@ -88,8 +88,11 @@
     return node;
   }
 
-  function money(cents) {
-    return (cents / 100).toLocaleString(state.lang === 'ar' ? 'ar' : 'en', { minimumFractionDigits: 2 });
+  function money(minorUnits) {
+    // currency comes from the API (1000/3 for KWD, 100/2 default)
+    var factor = (state.currency && state.currency.factor) || 100;
+    var decimals = (state.currency && state.currency.decimals) || 2;
+    return (minorUnits / factor).toLocaleString(state.lang === 'ar' ? 'ar' : 'en', { minimumFractionDigits: decimals });
   }
 
   /* ----------------------------- list view ----------------------------- */
@@ -420,6 +423,7 @@
   function loadBundles() {
     return api('/bundles').then(function (data) {
       state.bundles = data.bundles;
+      state.currency = data.currency || null;
       if (!state.editing) renderList();
     });
   }

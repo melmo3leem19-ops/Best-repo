@@ -13,9 +13,14 @@ const config = {
   scopes: process.env.SHOPIFY_SCOPES || 'read_products,write_products,read_inventory,write_discounts,read_orders',
   apiVersion: process.env.SHOPIFY_API_VERSION || '2025-01',
   port: parseInt(process.env.PORT || '3000', 10),
+  // Decimal places of the shop currency (2 for USD/SAR/AED, 3 for KWD/BHD/OMR).
+  // All internal money math uses minor units: amount * 10^currencyDecimals.
+  currencyDecimals: parseInt(process.env.CURRENCY_DECIMALS || '2', 10),
   databasePath: process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'bundle-builder.sqlite'),
   isDev: process.env.NODE_ENV !== 'production',
 };
+
+config.minorUnitFactor = 10 ** config.currencyDecimals;
 
 function assertConfigured() {
   const missing = [];

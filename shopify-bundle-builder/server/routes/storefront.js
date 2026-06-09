@@ -13,6 +13,7 @@
 
 const crypto = require('crypto');
 const express = require('express');
+const { config } = require('../config');
 const { bundles, analytics, productCache } = require('../db');
 const { calculatePricing, nextTierHint } = require('../lib/discount-engine');
 const { validateSelections } = require('../lib/bundle-validator');
@@ -67,6 +68,9 @@ router.get('/bundle/:handle', async (req, res) => {
 
     // Public payload: never leak admin-only fields.
     res.json({
+      // Tells the widget how to turn minor units into display amounts
+      // (1000 for 3-decimal currencies like KWD, 100 otherwise).
+      currency: { decimals: config.currencyDecimals, factor: config.minorUnitFactor },
       bundle: {
         id: bundle.id,
         handle: bundle.handle,

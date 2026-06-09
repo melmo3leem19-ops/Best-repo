@@ -6,6 +6,7 @@
 'use strict';
 
 const express = require('express');
+const { config } = require('../config');
 const { bundles, analytics, productCache } = require('../db');
 const { validateBundleDefinition } = require('../lib/bundle-validator');
 const { ShopifyClient } = require('../lib/shopify-client');
@@ -33,7 +34,10 @@ router.get('/bundles', (req, res) => {
     ...b,
     analytics: analytics.summary(req.shop, b.id),
   }));
-  res.json({ bundles: list });
+  res.json({
+    bundles: list,
+    currency: { decimals: config.currencyDecimals, factor: config.minorUnitFactor },
+  });
 });
 
 router.get('/bundles/:id', (req, res) => {
