@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bundle Builder — Admin</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>📦 Bundle Builder</h1>
+    <div class="topbar__actions">
+      <button id="lang-toggle" class="btn btn--ghost" type="button" title="العربية / English">ع / EN</button>
+      <button id="new-bundle" class="btn btn--primary" type="button" data-i18n="new_bundle">New bundle</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- Views are rendered by admin.js: bundle list, editor, analytics -->
+    <div class="loading" data-i18n="loading">Loading…</div>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

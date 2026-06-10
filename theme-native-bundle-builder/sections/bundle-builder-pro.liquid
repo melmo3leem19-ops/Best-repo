@@ -1,0 +1,430 @@
+{%- comment -%}
+  ═══════════════════════════════════════════════════════════════════════════
+  BUNDLE BUILDER PRO — metaobject-driven bundle builder
+  Al Moallem Mill · Kuwait · KWD (3-decimal) · Arabic (RTL) + English (LTR)
+
+  Unlike sections/bundle-builder.liquid (settings-driven, kept for existing
+  pages), this section is driven by `bundle_v4` metaobjects so merchants
+  manage unlimited bundles from Shopify Admin → Content → Metaobjects,
+  without touching the theme editor.
+
+  Data sources:
+    · bundle_v4 metaobject  — bundle identity, rules, discounts, schedule
+    · product metafields    — namespace `bundle`: badge, exclusions,
+                              priority, image/price overrides, eligibility
+    · section settings      — pure presentation (colors, typography, layout,
+                              spacing, animation) for the theme customizer
+
+  Checkout integrity: every discount tier maps to a real Shopify discount
+  code (created in Admin) with a minimum-quantity requirement. The widget
+  applies the right code at add-to-cart, so checkout always matches the UI.
+  ═══════════════════════════════════════════════════════════════════════════
+{%- endcomment -%}
+
+{%- liquid
+  assign st = section.settings
+  assign sid = section.id
+
+  # ── Direction / locale ────────────────────────────────────────────────
+  assign locale_is_ar = false
+  if request.locale.iso_code == 'ar'
+    assign locale_is_ar = true
+  endif
+  assign dir = 'ltr'
+  if locale_is_ar or st.force_rtl
+    assign dir = 'rtl'
+  endif
+
+  # ── Resolve the bundle metaobject ─────────────────────────────────────
+  # Priority: explicit pick in the customizer → highest-priority active one.
+  assign bundle = st.bundle
+  if bundle == blank
+    assign best_priority = 999999
+    for candidate in shop.metaobjects.bundle_v4.values
+      assign c_status = candidate.status.value | default: 'inactive' | downcase
+      if c_status != 'active'
+        continue
+      endif
+      assign c_priority = candidate.priority.value | default: 999998 | times: 1
+      if c_priority < best_priority
+        assign best_priority = c_priority
+        assign bundle = candidate
+      endif
+    endfor
+  endif
+
+  # ── Validate status + schedule ────────────────────────────────────────
+  assign is_live = false
+  if bundle != blank
+    assign b_status = bundle.status.value | default: 'inactive' | downcase
+    if b_status == 'active'
+      assign is_live = true
+    endif
+    assign now_s = 'now' | date: '%s' | times: 1
+    if bundle.start_date.value != blank
+      assign start_s = bundle.start_date.value | date: '%s' | times: 1
+      if now_s < start_s
+        assign is_live = false
+      endif
+    endif
+    if bundle.end_date.value != blank
+      assign end_s = bundle.end_date.value | date: '%s' | times: 1
+      if now_s > end_s
+        assign is_live = false
+      endif
+    endif
+  endif
+-%}
+
+{{ 'bundle-pro.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'bundle-pro.js' | asset_url }}" defer></script>
+
+{%- if is_live == false -%}
+  {%- if request.design_mode -%}
+    <div class="bbp-placeholder" style="padding:40px;text-align:center;border:2px dashed #ccc;">
+      {%- if bundle == blank -%}
+        Bundle Builder Pro: pick a bundle in the section settings, or create an
+        <strong>active</strong> Bundle V4 metaobject (Admin → Content → Metaobjects).
+      {%- else -%}
+        Bundle "{{ bundle.name.value }}" is inactive or outside its scheduled dates —
+        it will not render on the storefront.
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+{%- else -%}
+
+{%- liquid
+  # ── Localized bundle copy ─────────────────────────────────────────────
+  assign b_name = bundle.name.value
+  assign b_desc = bundle.description.value
+  if locale_is_ar
+    if bundle.name_ar.value != blank
+      assign b_name = bundle.name_ar.value
+    endif
+    if bundle.description_ar.value != blank
+      assign b_desc = bundle.description_ar.value
+    endif
+  endif
+
+  assign b_type = bundle.bundle_type.value | default: 'mix_match'
+  assign min_qty = bundle.min_products.value | default: 2 | times: 1
+  assign max_qty = bundle.max_products.value | default: 9 | times: 1
+  assign b_badge = bundle.badge.value
+  if locale_is_ar and bundle.badge_ar.value != blank
+    assign b_badge = bundle.badge_ar.value
+  endif
+  assign custom_class = bundle.custom_css_class.value | default: ''
+
+  # Comma-separated filters from the metaobject
+  assign tag_filters = ''
+  if bundle.tag_filter.value != blank
+    assign tag_filters = bundle.tag_filter.value | downcase | split: ','
+  endif
+  assign vendor_filters = ''
+  if bundle.vendor_filter.value != blank
+    assign vendor_filters = bundle.vendor_filter.value | downcase | split: ','
+  endif
+
+  assign excluded_ids = ''
+  for p in bundle.excluded_products.value
+    assign excluded_ids = excluded_ids | append: p.id | append: ','
+  endfor
+
+  assign limit_per_collection = st.products_per_collection | default: 12
+-%}
+
+<section
+  id="bbp-{{ sid }}"
+  class="bbp {{ custom_class }} bbp--{{ st.layout_style }} bbp--cards-{{ st.card_style }}"
+  dir="{{ dir }}"
+  style="
+    --bbp-bg: {{ st.color_bg }};
+    --bbp-text: {{ st.color_text }};
+    --bbp-accent: {{ st.color_accent }};
+    --bbp-accent-text: {{ st.color_accent_text }};
+    --bbp-card-bg: {{ st.color_card_bg }};
+    --bbp-border: {{ st.color_border }};
+    --bbp-badge-bg: {{ st.color_badge_bg }};
+    --bbp-badge-text: {{ st.color_badge_text }};
+    --bbp-save: {{ st.color_savings }};
+    --bbp-radius: {{ st.card_radius }}px;
+    --bbp-btn-radius: {{ st.button_radius }}px;
+    --bbp-gap: {{ st.grid_gap }}px;
+    --bbp-pad-top: {{ st.section_padding_top }}px;
+    --bbp-pad-bottom: {{ st.section_padding_bottom }}px;
+    --bbp-heading-size: {{ st.heading_size }}px;
+    --bbp-body-size: {{ st.body_size }}px;
+    --bbp-border-width: {{ st.border_width }}px;
+    --bbp-cols-desktop: {{ bundle.desktop_columns.value | default: st.desktop_columns }};
+    --bbp-cols-mobile: {{ bundle.mobile_columns.value | default: st.mobile_columns }};
+    --bbp-anim: {% if st.enable_animations %}1{% else %}0{% endif %};
+  "
+>
+  <bundle-builder-pro
+    class="bbp__app"
+    data-section-id="{{ sid }}"
+    data-currency="{{ cart.currency.iso_code }}"
+    data-locale="{% if locale_is_ar %}ar{% else %}en{% endif %}"
+    data-redirect="{{ st.redirect_to_cart }}"
+    data-bundle-handle="{{ bundle.system.handle | default: bundle.handle }}"
+  >
+    {%- comment -%} Machine-readable bundle config consumed by bundle-pro.js {%- endcomment -%}
+    <script type="application/json" data-bbp-config>
+      {
+        "type": {{ b_type | json }},
+        "minQty": {{ min_qty }},
+        "maxQty": {{ max_qty }},
+        "discountType": {{ bundle.discount_type.value | default: 'percentage' | json }},
+        "discountValue": {{ bundle.discount_value.value | default: 0 }},
+        "discountCode": {{ bundle.discount_code.value | default: '' | json }},
+        "tiers": {{ bundle.tier_discounts.value | json | default: '[]' }},
+        "freeGift": {% if bundle.free_gift_product.value != blank and bundle.free_gift_product.value.selected_or_first_available_variant != blank %}{"variantId": {{ bundle.free_gift_product.value.selected_or_first_available_variant.id }}, "title": {{ bundle.free_gift_product.value.title | json }}, "image": {{ bundle.free_gift_product.value.featured_image | image_url: width: 120 | json }}, "threshold": {{ bundle.free_gift_threshold.value | default: 0 }}}{% else %}null{% endif %},
+        "showSavings": {{ bundle.show_savings.value | default: true }},
+        "showProgress": {{ bundle.show_progress_bar.value | default: true }},
+        "discountDisplay": {{ st.discount_display | json }},
+        "analytics": true
+      }
+    </script>
+
+    {%- comment -%} UI strings, localized AR/EN at render time {%- endcomment -%}
+    <script type="application/json" data-bbp-i18n>
+      {%- if locale_is_ar -%}
+      {
+        "add": "أضف", "remove": "إزالة", "added_cart": "تمت إضافة الطقم إلى السلة!",
+        "cart_err": "حدث خطأ ما. حاول مرة أخرى.", "sold_out": "نفدت الكمية",
+        "progress": "تم اختيار {n} من {max}", "min_hint": "اختر {n} منتجات أخرى على الأقل",
+        "next_tier": "أضف {n} أكثر لتوفر {d}٪", "tier_unlocked": "حصلت على خصم {d}٪!",
+        "gift_unlocked": "🎁 هديتك المجانية مضافة!", "gift_progress": "أضف {n} لتحصل على هدية مجانية",
+        "subtotal": "المجموع الفرعي", "discount": "الخصم", "total": "الإجمالي",
+        "you_save": "وفّرت {amount}", "add_bundle": "أضف الطقم إلى السلة",
+        "adding": "جارٍ الإضافة…", "qty": "الكمية", "choose_option": "اختر خيارًا",
+        "drag_hint": "اسحب المنتجات هنا أو اضغط +", "fixed_locked": "محتوى هذا الطقم ثابت"
+      }
+      {%- else -%}
+      {
+        "add": "Add", "remove": "Remove", "added_cart": "Bundle added to cart!",
+        "cart_err": "Something went wrong. Please try again.", "sold_out": "Sold out",
+        "progress": "{n} of {max} selected", "min_hint": "Pick at least {n} more",
+        "next_tier": "Add {n} more to save {d}%", "tier_unlocked": "You unlocked {d}% off!",
+        "gift_unlocked": "🎁 Free gift added!", "gift_progress": "Add {n} more for a free gift",
+        "subtotal": "Subtotal", "discount": "Discount", "total": "Total",
+        "you_save": "You save {amount}", "add_bundle": "Add bundle to cart",
+        "adding": "Adding…", "qty": "Qty", "choose_option": "Choose an option",
+        "drag_hint": "Drag products here or tap +", "fixed_locked": "This bundle's contents are fixed"
+      }
+      {%- endif -%}
+    </script>
+
+    {%- comment -%} ── Header ── {%- endcomment -%}
+    <header class="bbp__header">
+      {%- if bundle.image.value != blank -%}
+        <img
+          class="bbp__hero-image"
+          src="{{ bundle.image.value | image_url: width: 1200 }}"
+          srcset="{{ bundle.image.value | image_url: width: 600 }} 600w, {{ bundle.image.value | image_url: width: 1200 }} 1200w"
+          sizes="(max-width: 749px) 100vw, 1200px"
+          alt="{{ b_name | escape }}"
+          loading="lazy"
+          width="1200" height="400"
+        >
+      {%- endif -%}
+      <div class="bbp__header-copy">
+        {%- if b_badge != blank -%}
+          <span class="bbp__badge bbp__badge--{{ st.badge_style }}">{{ b_badge }}</span>
+        {%- endif -%}
+        <h1 class="bbp__title">{{ b_name }}</h1>
+        {%- if b_desc != blank -%}
+          <p class="bbp__subtitle">{{ b_desc | newline_to_br }}</p>
+        {%- endif -%}
+      </div>
+    </header>
+
+    {%- comment -%} ── Progress + tier track ── {%- endcomment -%}
+    {%- if bundle.show_progress_bar.value != false -%}
+      <div class="bbp__progress bbp__progress--{{ st.progress_style }}" data-bbp-progress>
+        <div class="bbp__progress-track"><div class="bbp__progress-fill" data-bbp-progress-fill></div></div>
+        <div class="bbp__progress-label" data-bbp-progress-label aria-live="polite"></div>
+        <div class="bbp__tier-markers" data-bbp-tier-markers></div>
+      </div>
+    {%- endif -%}
+
+    {%- comment -%} ── Product source: fixed bundles render required products,
+                       everything else renders the source collections ── {%- endcomment -%}
+    <div class="bbp__body">
+      <div class="bbp__catalog" data-bbp-catalog>
+        {%- if b_type == 'fixed' -%}
+          <div class="bbp__group" data-bbp-step="0">
+            <div class="bbp__grid bbp__grid--{{ st.view_mode }}">
+              {%- for product in bundle.required_products.value -%}
+                {% render 'bundle-pro-card', product: product, locale_is_ar: locale_is_ar, settings: st, fixed: true, step: 0 %}
+              {%- endfor -%}
+            </div>
+            <p class="bbp__fixed-note">{% if locale_is_ar %}محتوى هذا الطقم ثابت — أضفه مباشرة بسعر الطقم.{% else %}This bundle's contents are fixed — add it straight to your cart at the bundle price.{% endif %}</p>
+          </div>
+        {%- else -%}
+          {%- assign step_index = 0 -%}
+          {%- for collection in bundle.collections.value -%}
+            {%- liquid
+              assign group_title = collection.title
+              if b_type == 'wizard'
+                assign group_title = 'Step ' | append: forloop.index | append: ' — ' | append: collection.title
+                if locale_is_ar
+                  assign group_title = 'الخطوة ' | append: forloop.index | append: ' — ' | append: collection.title
+                endif
+              endif
+            -%}
+            <div class="bbp__group" data-bbp-step="{{ step_index }}" {% if b_type == 'wizard' and forloop.first != true %}hidden{% endif %}>
+              <h2 class="bbp__group-title">{{ group_title }}</h2>
+              <div class="bbp__grid bbp__grid--{{ st.view_mode }}">
+                {%- for product in collection.products limit: limit_per_collection -%}
+                  {%- liquid
+                    # ── Product-level filtering via metafields + metaobject filters ──
+                    assign skip = false
+                    if product.metafields.bundle.exclude_from_bundle.value == true
+                      assign skip = true
+                    endif
+                    if excluded_ids contains product.id
+                      assign skip = true
+                    endif
+                    if product.available == false and st.hide_sold_out
+                      assign skip = true
+                    endif
+                    if tag_filters != ''
+                      assign tag_hit = false
+                      for t in tag_filters
+                        assign t_clean = t | strip
+                        if product.tags contains t_clean
+                          assign tag_hit = true
+                        endif
+                      endfor
+                      unless tag_hit
+                        assign skip = true
+                      endunless
+                    endif
+                    if vendor_filters != ''
+                      assign v_clean = product.vendor | downcase
+                      unless vendor_filters contains v_clean
+                        assign skip = true
+                      endunless
+                    endif
+                  -%}
+                  {%- unless skip -%}
+                    {% render 'bundle-pro-card', product: product, locale_is_ar: locale_is_ar, settings: st, fixed: false, step: step_index %}
+                  {%- endunless -%}
+                {%- endfor -%}
+              </div>
+            </div>
+            {%- assign step_index = step_index | plus: 1 -%}
+          {%- endfor -%}
+
+          {%- if b_type == 'wizard' -%}
+            <nav class="bbp__wizard-nav">
+              <button type="button" class="bbp__btn bbp__btn--ghost" data-bbp-wizard-prev hidden>{% if locale_is_ar %}رجوع{% else %}Back{% endif %}</button>
+              <button type="button" class="bbp__btn bbp__btn--ghost" data-bbp-wizard-next>{% if locale_is_ar %}التالي{% else %}Next{% endif %}</button>
+            </nav>
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+
+      {%- comment -%} ── Selection rail (drop target for drag & drop) ── {%- endcomment -%}
+      <aside class="bbp__rail" data-bbp-rail aria-label="{% if locale_is_ar %}طقمك{% else %}Your bundle{% endif %}">
+        <div class="bbp__rail-slots" data-bbp-slots data-drag-hint="{% if locale_is_ar %}اسحب المنتجات هنا أو اضغط +{% else %}Drag products here or tap +{% endif %}"></div>
+        <div class="bbp__rail-summary" data-bbp-summary aria-live="polite"></div>
+        <button type="button" class="bbp__btn bbp__btn--primary bbp__cta" data-bbp-submit disabled>
+          <span data-bbp-cta-label>{% if locale_is_ar %}أضف الطقم إلى السلة{% else %}Add bundle to cart{% endif %}</span>
+        </button>
+        <p class="bbp__hint" data-bbp-hint role="status"></p>
+      </aside>
+    </div>
+
+    <span class="bbp__sr" data-bbp-sr aria-live="assertive"></span>
+  </bundle-builder-pro>
+</section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Bundle Builder Pro",
+  "tag": "section",
+  "class": "section-bundle-builder-pro",
+  "settings": [
+    { "type": "header", "content": "Bundle source" },
+    {
+      "type": "metaobject",
+      "id": "bundle",
+      "metaobject_type": "bundle_v4",
+      "label": "Bundle configuration",
+      "info": "Create bundles under Admin → Content → Metaobjects → Bundle V4. Leave empty to auto-show the highest-priority active bundle."
+    },
+    { "type": "range", "id": "products_per_collection", "label": "Products per collection", "min": 4, "max": 24, "step": 2, "default": 12 },
+    { "type": "checkbox", "id": "hide_sold_out", "label": "Hide sold-out products", "default": false },
+    { "type": "checkbox", "id": "redirect_to_cart", "label": "Go to cart page after adding", "default": false },
+
+    { "type": "header", "content": "Layout" },
+    { "type": "select", "id": "layout_style", "label": "Layout", "default": "rail", "options": [
+      { "value": "rail", "label": "Catalog + side rail" },
+      { "value": "stacked", "label": "Stacked (summary below)" }
+    ]},
+    { "type": "select", "id": "view_mode", "label": "Product view", "default": "grid", "options": [
+      { "value": "grid", "label": "Grid" },
+      { "value": "list", "label": "List" }
+    ]},
+    { "type": "range", "id": "desktop_columns", "label": "Desktop columns", "min": 2, "max": 6, "step": 1, "default": 3 },
+    { "type": "range", "id": "mobile_columns", "label": "Mobile columns", "min": 1, "max": 3, "step": 1, "default": 2 },
+
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "color_bg", "label": "Background", "default": "#f1f0ec" },
+    { "type": "color", "id": "color_text", "label": "Text", "default": "#141414" },
+    { "type": "color", "id": "color_accent", "label": "Accent / buttons", "default": "#1a1a1a" },
+    { "type": "color", "id": "color_accent_text", "label": "Button text", "default": "#ffffff" },
+    { "type": "color", "id": "color_card_bg", "label": "Card background", "default": "#ffffff" },
+    { "type": "color", "id": "color_border", "label": "Borders", "default": "#e2ded6" },
+    { "type": "color", "id": "color_badge_bg", "label": "Badge background", "default": "#c0392b" },
+    { "type": "color", "id": "color_badge_text", "label": "Badge text", "default": "#ffffff" },
+    { "type": "color", "id": "color_savings", "label": "Savings highlight", "default": "#0a7d36" },
+
+    { "type": "header", "content": "Typography" },
+    { "type": "range", "id": "heading_size", "label": "Heading size", "min": 20, "max": 64, "step": 2, "default": 40, "unit": "px" },
+    { "type": "range", "id": "body_size", "label": "Body size", "min": 12, "max": 20, "step": 1, "default": 15, "unit": "px" },
+
+    { "type": "header", "content": "Cards & buttons" },
+    { "type": "select", "id": "card_style", "label": "Card style", "default": "soft", "options": [
+      { "value": "soft", "label": "Soft shadow" },
+      { "value": "outline", "label": "Outlined" },
+      { "value": "flat", "label": "Flat" }
+    ]},
+    { "type": "range", "id": "card_radius", "label": "Card corner radius", "min": 0, "max": 28, "step": 2, "default": 14, "unit": "px" },
+    { "type": "range", "id": "button_radius", "label": "Button corner radius", "min": 0, "max": 32, "step": 2, "default": 24, "unit": "px" },
+    { "type": "range", "id": "border_width", "label": "Border width", "min": 0, "max": 4, "step": 1, "default": 1, "unit": "px" },
+
+    { "type": "header", "content": "Badges, progress & discounts" },
+    { "type": "select", "id": "badge_style", "label": "Badge style", "default": "pill", "options": [
+      { "value": "pill", "label": "Pill" },
+      { "value": "ribbon", "label": "Ribbon" },
+      { "value": "minimal", "label": "Minimal" }
+    ]},
+    { "type": "select", "id": "progress_style", "label": "Progress bar style", "default": "tiered", "options": [
+      { "value": "tiered", "label": "With tier markers" },
+      { "value": "simple", "label": "Simple bar" },
+      { "value": "dots", "label": "Slot dots" }
+    ]},
+    { "type": "select", "id": "discount_display", "label": "Discount display", "default": "both", "options": [
+      { "value": "both", "label": "Percentage + amount saved" },
+      { "value": "percent", "label": "Percentage only" },
+      { "value": "amount", "label": "Amount saved only" }
+    ]},
+
+    { "type": "header", "content": "Motion & spacing" },
+    { "type": "checkbox", "id": "enable_animations", "label": "Enable animations", "default": true },
+    { "type": "range", "id": "grid_gap", "label": "Grid gap", "min": 8, "max": 32, "step": 2, "default": 16, "unit": "px" },
+    { "type": "range", "id": "section_padding_top", "label": "Top padding", "min": 0, "max": 120, "step": 4, "default": 24, "unit": "px" },
+    { "type": "range", "id": "section_padding_bottom", "label": "Bottom padding", "min": 0, "max": 120, "step": 4, "default": 80, "unit": "px" },
+
+    { "type": "header", "content": "Language & direction" },
+    { "type": "checkbox", "id": "force_rtl", "label": "Force RTL layout", "info": "RTL is automatic for Arabic. Tick to force-mirror in other languages.", "default": false }
+  ],
+  "presets": [
+    { "name": "Bundle Builder Pro" }
+  ]
+}
+{% endschema %}

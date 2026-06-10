@@ -1,0 +1,102 @@
+{%- comment -%}
+  Bundle Builder Pro — product card.
+
+  Params:
+    product       (product)  required
+    locale_is_ar  (boolean)
+    settings      (section settings) for view options
+    fixed         (boolean) fixed bundles render locked, pre-selected cards
+    step          (number)  group/step index for wizard bundles
+
+  Product metafields honored (namespace `bundle`):
+    badge                 — card badge text (falls back to none)
+    bundle_image_override — alternate image used inside the builder
+    bundle_price_override — display price override (minor units NOT assumed;
+                            this is a Money metafield rendered for display,
+                            actual cart price always comes from the variant)
+    bundle_priority       — used by JS for default sort within the grid
+{%- endcomment -%}
+
+{%- liquid
+  assign card_image = product.featured_image
+  if product.metafields.bundle.bundle_image_override.value != blank
+    assign card_image = product.metafields.bundle.bundle_image_override.value
+  endif
+
+  assign card_badge = product.metafields.bundle.badge.value
+
+  assign price_override = product.metafields.bundle.bundle_price_override.value
+  assign first_variant = product.selected_or_first_available_variant
+  assign card_priority = product.metafields.bundle.bundle_priority.value | default: 100
+-%}
+
+<article
+  class="bbp-card {% if product.available == false %}bbp-card--oos{% endif %} {% if fixed %}bbp-card--fixed{% endif %}"
+  data-bbp-card
+  data-product-id="{{ product.id }}"
+  data-product-title="{{ product.title | escape }}"
+  data-step="{{ step | default: 0 }}"
+  data-priority="{{ card_priority }}"
+  data-image="{{ card_image | image_url: width: 160 }}"
+  data-variants="{%- capture vjson -%}[{%- for v in product.variants -%}{"id":{{ v.id }},"title":{{ v.title | json }},"price":{{ v.price }},"available":{{ v.available }},"qty":{{ v.inventory_quantity | default: -1 }},"policy":{{ v.inventory_policy | json }},"managed":{% if v.inventory_management %}true{% else %}false{% endif %}}{%- unless forloop.last -%},{%- endunless -%}{%- endfor -%}]{%- endcapture -%}{{ vjson | escape }}"
+  {% unless product.available == false or fixed %}draggable="true"{% endunless %}
+>
+  <div class="bbp-card__media">
+    {%- if card_badge != blank -%}
+      <span class="bbp-card__badge">{{ card_badge }}</span>
+    {%- endif -%}
+    {%- if card_image != blank -%}
+      <img
+        src="{{ card_image | image_url: width: 360 }}"
+        srcset="{{ card_image | image_url: width: 360 }} 360w, {{ card_image | image_url: width: 540 }} 540w"
+        sizes="(max-width: 749px) 45vw, 280px"
+        alt="{{ card_image.alt | default: product.title | escape }}"
+        loading="lazy"
+        width="360" height="360"
+      >
+    {%- else -%}
+      {{ 'product-1' | placeholder_svg_tag: 'bbp-card__placeholder' }}
+    {%- endif -%}
+    <a class="bbp-card__quickview" href="{{ product.url }}" aria-label="{% if locale_is_ar %}عرض {{ product.title | escape }}{% else %}View {{ product.title | escape }}{% endif %}" tabindex="-1">
+      {% render 'bundle-builder-icon', name: 'eye' %}
+    </a>
+  </div>
+
+  <div class="bbp-card__body">
+    <h3 class="bbp-card__title">{{ product.title }}</h3>
+
+    <p class="bbp-card__price" data-bbp-card-price>
+      {%- if price_override != blank -%}
+        <s class="bbp-card__compare">{{ first_variant.price | money }}</s>
+        {{ price_override | money }}
+      {%- elsif first_variant.compare_at_price > first_variant.price -%}
+        <s class="bbp-card__compare">{{ first_variant.compare_at_price | money }}</s>
+        {{ first_variant.price | money }}
+      {%- else -%}
+        {{ first_variant.price | money }}
+      {%- endif -%}
+    </p>
+
+    {%- if product.variants.size > 1 -%}
+      <select class="bbp-card__variants" data-bbp-variant aria-label="{% if locale_is_ar %}اختر خيارًا{% else %}Choose an option{% endif %}">
+        {%- for v in product.variants -%}
+          <option value="{{ v.id }}" {% unless v.available %}disabled{% endunless %}>
+            {{ v.title }}{% unless v.available %} — {% if locale_is_ar %}نفدت الكمية{% else %}Sold out{% endif %}{% endunless %}
+          </option>
+        {%- endfor -%}
+      </select>
+    {%- endif -%}
+
+    <div class="bbp-card__actions">
+      {%- if product.available == false -%}
+        <span class="bbp-card__oos-label">{% if locale_is_ar %}نفدت الكمية{% else %}Sold out{% endif %}</span>
+      {%- elsif fixed -%}
+        <span class="bbp-card__lock" title="{% if locale_is_ar %}محتوى ثابت{% else %}Fixed item{% endif %}">{% render 'bundle-builder-icon', name: 'check' %}</span>
+      {%- else -%}
+        <button type="button" class="bbp-card__btn bbp-card__btn--minus" data-bbp-minus aria-label="{% if locale_is_ar %}إزالة{% else %}Remove{% endif %}" hidden>−</button>
+        <span class="bbp-card__qty" data-bbp-qty aria-live="polite" hidden>0</span>
+        <button type="button" class="bbp-card__btn bbp-card__btn--plus" data-bbp-plus aria-label="{% if locale_is_ar %}أضف {{ product.title | escape }}{% else %}Add {{ product.title | escape }}{% endif %}">+</button>
+      {%- endif -%}
+    </div>
+  </div>
+</article>

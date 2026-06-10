@@ -1,0 +1,24 @@
+# Shopify CLI app configuration.
+# Run `shopify app config link` after creating the app in the Partner
+# Dashboard to fill in client_id automatically.
+
+name = "Bundle Builder"
+client_id = ""
+application_url = "https://your-app-domain.com"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,write_products,read_inventory,write_discounts,read_orders"
+
+[auth]
+redirect_urls = ["https://your-app-domain.com/auth/callback"]
+
+[webhooks]
+api_version = "2025-01"
+
+# Storefront widget reaches the server same-origin through this proxy:
+# https://<store>.com/apps/bundle-builder/* -> APP_URL/proxy/*
+[app_proxy]
+url = "https://your-app-domain.com/proxy"
+subpath = "bundle-builder"
+prefix = "apps"

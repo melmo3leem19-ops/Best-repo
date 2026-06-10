@@ -1,0 +1,29 @@
+{
+  "name": "shopify-bundle-builder",
+  "version": "1.0.0",
+  "description": "Advanced Shopify Bundle Builder app with full RTL (Arabic) + LTR (English) support. Mix & Match, BYOB, Box Builder, Fixed, Infinite Options and Combo bundles with BOGO, tiered, volume and progressive discount logic.",
+  "main": "server/index.js",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "NODE_ENV=development node server/index.js",
+    "test": "node tests/run-all.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.19.2"
+  },
+  "keywords": [
+    "shopify",
+    "bundle-builder",
+    "rtl",
+    "arabic",
+    "mix-and-match",
+    "byob",
+    "discounts"
+  ],
+  "license": "MIT"
+}

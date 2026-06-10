@@ -1,0 +1,37 @@
+{
+  "sections": {
+    "bundle_pro": {
+      "type": "bundle-builder-pro",
+      "settings": {
+        "products_per_collection": 12,
+        "layout_style": "rail",
+        "view_mode": "grid",
+        "desktop_columns": 3,
+        "mobile_columns": 2,
+        "color_bg": "#f1f0ec",
+        "color_text": "#141414",
+        "color_accent": "#1a1a1a",
+        "color_accent_text": "#ffffff",
+        "color_card_bg": "#ffffff",
+        "color_border": "#e2ded6",
+        "color_badge_bg": "#c0392b",
+        "color_badge_text": "#ffffff",
+        "color_savings": "#0a7d36",
+        "heading_size": 40,
+        "body_size": 15,
+        "card_style": "soft",
+        "card_radius": 14,
+        "button_radius": 24,
+        "border_width": 1,
+        "badge_style": "pill",
+        "progress_style": "tiered",
+        "discount_display": "both",
+        "enable_animations": true,
+        "grid_gap": 16,
+        "section_padding_top": 24,
+        "section_padding_bottom": 80
+      }
+    }
+  },
+  "order": ["bundle_pro"]
+}
