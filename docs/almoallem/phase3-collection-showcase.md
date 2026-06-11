@@ -116,3 +116,23 @@ Reused existing keys: `accessibility.slideshow_pause/play`, `accessibility.slide
 - Magazine/masonry item-count sweet spots: magazine pattern repeats per 6 items, masonry looks best with ≥6; with only 2–3 collections grid/split/luxury read better (merchant guidance, not a defect)
 - Section settings text (heading/description and block custom titles) is store-content, translated via Shopify Translate & Adapt, not theme locales — expected Shopify behavior
 - Theme editor preview of `content-visibility: auto` can defer paint of far-offscreen sections while scrolling fast; toggle `enable_virtual_rendering` off if a merchant reports it
+
+## Sync verification (final)
+
+All Phase 3 files confirmed on theme `Copy of Copy of v4` (187213774882) with MD5
+byte-match against this mirror on 2026-06-11:
+
+| File | MD5 |
+|------|-----|
+| sections/universal-collection-showcase.liquid | 0902a53c88a3a2627af6ae49bd0bf574 |
+| snippets/showcase-collection-card.liquid | 1f07dfaf7018e8266eeb25e51f0ba565 |
+| snippets/showcase-layout.liquid | 879ebd30228a7131eb7391d1ef65b3bb |
+| assets/collection-showcase.css | e24e0478a449bcc748a6a7d1c162d825 |
+| assets/collection-showcase.js | 6418dba5814adf15ca64257b4d04f6ba |
+| locales/en.default.json | 8493abe1d775886c4994df1272fe23bc |
+| locales/ar.json | 61bb3494dcc15ee8b381498f86ecbcc3 |
+| templates/index.json | ee0e9c9fbb4f4e67498d50291b1e1c35 |
+
+Homepage (`templates/index.json`) now renders the showcase as the second section
+with collections: بهارات، مكسرات، دراجية (carousel mode, arrows+dots, infinite loop,
+reveal animation desktop-only, virtual rendering on).
