@@ -126,7 +126,7 @@
   }
 }
 
-/* ── Visibility per device (mobile-first) ──────────────────────────────── */
+/* ── Visibility per device (mobile-first) ──────────────────────────── */
 @media screen and (max-width: 749px) {
   .badge-system--hide-mobile {
     display: none;
@@ -139,7 +139,7 @@
   }
 }
 
-/* ── Shared inner chip ─────────────────────────────────────────────────── */
+/* ── Shared inner chip ─────────────────────────────────────── */
 .badge-system__inner {
   position: relative;
   display: inline-flex;
@@ -193,7 +193,7 @@
   display: none;
 }
 
-/* ══ Layout 1 — Minimal luxury pill ════════════════════════════════════ */
+/* ══ Layout 1 — Minimal luxury pill ════════════════════════════════ */
 .badge-system--layout-1 .badge-system__inner {
   text-transform: uppercase;
 }
@@ -217,7 +217,7 @@
   }
 }
 
-/* ══ Layout 3 — Ribbon / corner banner ═════════════════════════════════ */
+/* ══ Layout 3 — Ribbon / corner banner ═════════════════════════════ */
 .badge-system--layout-3 .badge-system__inner {
   padding-inline-end: 1.6em;
   text-transform: uppercase;
@@ -229,7 +229,7 @@
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0.7em 50%);
 }
 
-/* ══ Layout 4 — Outlined + icon ════════════════════════════════════════ */
+/* ══ Layout 4 — Outlined + icon ══════════════════════════════════ */
 .badge-system--layout-4 .badge-system__inner {
   background: var(--bs-bg, #fff);
   border: max(1px, var(--bs-border-w, 1px)) solid var(--bs-border-color, currentColor);
@@ -258,7 +258,7 @@
   opacity: 0.55;
 }
 
-/* ── Animation presets (transform/opacity only) ────────────────────────── */
+/* ── Animation presets (transform/opacity only) ────────────────────── */
 .badge-system--anim-shine .badge-system__shine,
 .badge-system--anim-luxury .badge-system__shine {
   display: block;
