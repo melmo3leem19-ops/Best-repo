@@ -1,0 +1,1 @@
+/* REMOVED 2026-06-11 (Phase 1 Bundle Builder cleanup). Inert stub - delete this file in Shopify admin > Edit code. */

@@ -1,0 +1,134 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "bundle_builder": {
+      "type": "bundle-builder",
+      "settings": {
+        "title": "Build Your Own Bundle",
+        "title_ar": "اصنع طقمك الخاص",
+        "subtitle": "Save 15% plus get a FREE mini when you build your own bundle with 3 or more products.",
+        "subtitle_ar": "وفّر 15٪ واحصل على هدية مجانية عند إنشاء طقم من 3 منتجات أو أكثر.",
+        "marquee_text": "Free delivery in Kuwait on orders over 10 KWD  ·  Save up to 25% on bundles",
+        "marquee_text_ar": "توصيل مجاني داخل الكويت للطلبات فوق 10 د.ك  ·  وفّر حتى 25٪ على الأطقم",
+        "min_products": 3,
+        "max_products": 9,
+        "redirect_to_cart": false,
+        "tier_1_qty": 3,
+        "tier_1_discount": 15,
+        "tier_2_qty": 6,
+        "tier_2_discount": 20,
+        "tier_3_qty": 9,
+        "tier_3_discount": 25,
+        "enable_free_gift": false,
+        "free_gift_threshold": 3,
+        "image_fit": "contain",
+        "show_value_props": true,
+        "vp_1": "🎁 Free mini at 3+ items",
+        "vp_1_ar": "🎁 هدية مجانية عند 3 منتجات",
+        "vp_2": "🚚 Free delivery in Kuwait",
+        "vp_2_ar": "🚚 توصيل مجاني داخل الكويت",
+        "vp_3": "🔒 Secure checkout",
+        "vp_3_ar": "🔒 دفع آمن",
+        "show_how": true,
+        "how_title": "How It Works",
+        "how_title_ar": "كيف يعمل",
+        "how_1_title": "Pick Your Products",
+        "how_1_title_ar": "اختر منتجاتك",
+        "how_1_text": "Browse the categories below and add your favourites to the bundle.",
+        "how_1_text_ar": "تصفّح الأقسام بالأسفل وأضف مفضلاتك إلى الطقم.",
+        "how_2_title": "Watch The Savings",
+        "how_2_title_ar": "شاهد توفيرك",
+        "how_2_text": "The more you add, the bigger your discount — save up to 25%, plus a free mini.",
+        "how_2_text_ar": "كلما أضفت أكثر زاد خصمك — وفّر حتى 25٪ مع هدية مجانية.",
+        "how_3_title": "Add To Cart",
+        "how_3_title_ar": "أضف إلى السلة",
+        "how_3_text": "Add your finished bundle to the cart — your discount is applied automatically.",
+        "how_3_text_ar": "أضف طقمك المكتمل إلى السلة — يُطبَّق الخصم تلقائياً.",
+        "faq_heading": "Frequently Asked Questions",
+        "faq_heading_ar": "الأسئلة الشائعة",
+        "color_bg": "#f1f0ec",
+        "color_text": "#141414",
+        "color_rail_bg": "#e7dbd1",
+        "color_accent": "#1a1a1a",
+        "card_radius": 14,
+        "section_padding_top": 24,
+        "section_padding_bottom": 80
+      },
+      "blocks": {
+        "cat_nuts": {
+          "type": "collection",
+          "settings": {
+            "collection": "مكسرات",
+            "collection_tab_label": "Start With Nuts",
+            "step_description": "Premium roasted nuts — pick your favourites.",
+            "product_limit": 12
+          }
+        },
+        "cat_choc": {
+          "type": "collection",
+          "settings": {
+            "collection": "شوكولاتة-بلجيكية-فاخرة",
+            "collection_tab_label": "Add Some Chocolate",
+            "step_description": "Finest Belgian chocolate to sweeten the bundle.",
+            "product_limit": 12
+          }
+        },
+        "cat_sweets": {
+          "type": "collection",
+          "settings": {
+            "collection": "حلويات-العيد",
+            "collection_tab_label": "Finish With Sweets",
+            "step_description": "Traditional sweets to complete your bundle.",
+            "product_limit": 12
+          }
+        },
+        "faq_1": {
+          "type": "faq",
+          "settings": {
+            "question": "How many products can I add to a bundle?",
+            "question_ar": "كم عدد المنتجات التي يمكنني إضافتها إلى الطقم؟",
+            "answer": "<p>You can add up to 9 products. Discounts apply automatically as you reach 3, 6, and 9 items.</p>",
+            "answer_ar": "<p>يمكنك إضافة حتى 9 منتجات. تُطبَّق الخصومات تلقائياً عند الوصول إلى 3 و6 و9 منتجات.</p>"
+          }
+        },
+        "faq_2": {
+          "type": "faq",
+          "settings": {
+            "question": "How is the discount applied?",
+            "question_ar": "كيف يُطبَّق الخصم؟",
+            "answer": "<p>Your bundle discount is calculated live as you build, and applied automatically when you add the bundle to your cart.</p>",
+            "answer_ar": "<p>يُحتسب خصم الطقم مباشرةً أثناء البناء، ويُطبَّق تلقائياً عند إضافة الطقم إلى السلة.</p>"
+          }
+        },
+        "faq_3": {
+          "type": "faq",
+          "settings": {
+            "question": "Can I mix products from different categories?",
+            "question_ar": "هل يمكنني المزج بين منتجات من أقسام مختلفة؟",
+            "answer": "<p>Yes — mix and match freely across nuts, chocolate, and sweets to build your perfect bundle.</p>",
+            "answer_ar": "<p>نعم — امزج بحرّية بين المكسرات والشوكولاتة والحلويات لبناء طقمك المثالي.</p>"
+          }
+        },
+        "faq_4": {
+          "type": "faq",
+          "settings": {
+            "question": "Do you deliver across Kuwait?",
+            "question_ar": "هل تقومون بالتوصيل في جميع أنحاء الكويت؟",
+            "answer": "<p>Yes, we deliver across Kuwait. Delivery is free on orders over 10 KWD.</p>",
+            "answer_ar": "<p>نعم، نوصل إلى جميع أنحاء الكويت. التوصيل مجاني للطلبات فوق 10 د.ك.</p>"
+          }
+        }
+      },
+      "block_order": ["cat_nuts", "cat_choc", "cat_sweets", "faq_1", "faq_2", "faq_3", "faq_4"]
+    }
+  },
+  "order": ["bundle_builder"]
+}

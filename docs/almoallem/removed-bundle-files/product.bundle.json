@@ -1,0 +1,38 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "bundle_builder": {
+      "type": "bundle-builder",
+      "settings": {
+        "min_products": 3,
+        "max_products": 5
+      }
+    },
+    "bundle_fbt": {
+      "type": "bundle-fbt",
+      "settings": {
+        "auto_recommendations": true,
+        "discount_type": "percentage",
+        "discount_value": 10,
+        "layout": "horizontal"
+      }
+    },
+    "product_recs": {
+      "type": "product-recommendations",
+      "settings": {}
+    }
+  },
+  "order": [
+    "bundle_builder",
+    "bundle_fbt",
+    "product_recs"
+  ]
+}

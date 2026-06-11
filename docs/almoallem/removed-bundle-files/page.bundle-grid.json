@@ -1,0 +1,77 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {}
+    },
+    "bundle_grid": {
+      "type": "bundle-builder",
+      "blocks": {
+        "cat_nuts": {
+          "type": "collection",
+          "settings": {
+            "collection": "مكسرات",
+            "collection_tab_label": "Start With Nuts",
+            "step_description": "Premium roasted nuts — pick your favourites.",
+            "product_limit": 12
+          }
+        },
+        "cat_choc": {
+          "type": "collection",
+          "settings": {
+            "collection": "شوكولاتة-بلجيكية-فاخرة",
+            "collection_tab_label": "Add Some Chocolate",
+            "step_description": "Finest Belgian chocolate to sweeten the box.",
+            "product_limit": 12
+          }
+        },
+        "cat_sweets": {
+          "type": "collection",
+          "settings": {
+            "collection": "حلويات-العيد",
+            "collection_tab_label": "Finish With Sweets",
+            "step_description": "Traditional Eid sweets to complete your bundle.",
+            "product_limit": 12
+          }
+        }
+      },
+      "block_order": [
+        "cat_nuts",
+        "cat_choc",
+        "cat_sweets"
+      ],
+      "settings": {
+        "title": "Build Your Own Box",
+        "title_ar": "اصنع صندوقك بنفسك",
+        "subtitle": "Save 15% plus get a FREE mini when you build your own box with 3 or more products.",
+        "subtitle_ar": "وفّر 15٪ واحصل على هدية مجانية عند إنشاء صندوق من 3 منتجات أو أكثر.",
+        "marquee_text": "Free delivery in Kuwait on orders over 10 KWD",
+        "marquee_text_ar": "توصيل مجاني داخل الكويت للطلبات فوق 10 د.ك",
+        "min_products": 3,
+        "max_products": 9,
+        "tier_1_qty": 3,
+        "tier_1_discount": 15,
+        "tier_2_qty": 6,
+        "tier_2_discount": 20,
+        "tier_3_qty": 9,
+        "tier_3_discount": 25,
+        "color_accent": "#1a1a1a",
+        "section_padding_top": 24,
+        "section_padding_bottom": 80
+      }
+    }
+  },
+  "order": [
+    "main",
+    "bundle_grid"
+  ]
+}
