@@ -1,0 +1,13 @@
+{%- doc -%}
+  Custom Badge Snippet (legacy shim)
+
+  Phase 2: this snippet now delegates to the Advanced Badge System
+  (snippets/badge-system.liquid). It is kept so any legacy call sites keep
+  working; all rendering, layouts and styling live in badge-system.liquid
+  and assets/badge-system.css, driven by the "Badge System" settings group.
+
+  @param {object} product - The product object
+  @param {string} [position] - Optional position override (top-left, top-right, bottom-left, bottom-right, center, custom)
+{%- enddoc -%}
+
+{%- render 'badge-system', product: product, context: 'card', position_override: position -%}

@@ -1,0 +1,119 @@
+{%- doc -%}
+  Advanced Badge System — single entry point for all product badges.
+
+  Resolves badge content by priority:
+    1. custom.custom_badge metaobject (field: add_the_badge)
+    2. custom.best_seller (boolean)  -> localized "Best seller"
+    3. custom.best_value  (boolean)  -> localized "Best value"
+    4. On sale (compare_at_price > price)
+    5. Sold out
+  Renders nothing when no badge applies or the system is disabled.
+
+  Layout is resolved from custom.badge_layout. Accepts both legacy
+  ("Option 1".."Option 5") and new ("layout_1".."layout_5") values;
+  unknown values fall back to layout 1.
+
+  Styling is fully driven by theme settings (Badge System group) and
+  emitted as CSS custom properties consumed by assets/badge-system.css.
+
+  @param {object} product - The product object (required)
+  @param {string} [context] - 'card' (default) | 'product-page' | 'quick-view'
+  @param {string} [position_override] - Overrides the global position setting
+{%- enddoc -%}
+
+{%- liquid
+  assign bs_render = true
+  if settings.badge_system_enabled != true or product == blank
+    assign bs_render = false
+  endif
+
+  assign badge_context = context | default: 'card'
+
+  # ── 1. Resolve badge content (priority chain) ──
+  assign badge_type = ''
+  assign badge_text = ''
+  if bs_render
+    assign badge_metaobject = product.metafields.custom.custom_badge.value
+    if badge_metaobject != blank
+      assign badge_text = badge_metaobject.add_the_badge.value
+      if badge_text != blank
+        assign badge_type = 'custom'
+      endif
+    endif
+    if badge_type == blank
+      if product.metafields.custom.best_seller.value == true
+        assign badge_type = 'best-seller'
+        assign badge_text = 'content.product_badge_best_seller' | t
+      elsif product.metafields.custom.best_value.value == true
+        assign badge_type = 'best-value'
+        assign badge_text = 'content.product_badge_best_value' | t
+      elsif product.available and product.compare_at_price > product.price
+        assign badge_type = 'sale'
+        assign badge_text = 'content.product_badge_sale' | t
+      elsif product.available == false
+        assign badge_type = 'sold-out'
+        assign badge_text = 'content.product_badge_sold_out' | t
+      endif
+    endif
+  endif
+
+  # ── 2. Resolve layout (1..5), tolerant of legacy values ──
+  assign layout_raw = product.metafields.custom.badge_layout.value | downcase | strip
+  assign layout_num = '1'
+  case layout_raw
+    when 'option 2', 'layout_2', 'layout 2', '2'
+      assign layout_num = '2'
+    when 'option 3', 'layout_3', 'layout 3', '3'
+      assign layout_num = '3'
+    when 'option 4', 'layout_4', 'layout 4', '4'
+      assign layout_num = '4'
+    when 'option 5', 'layout_5', 'layout 5', '5'
+      assign layout_num = '5'
+  endcase
+
+  # ── 3. Position / animation / visibility ──
+  assign badge_pos = position_override | default: settings.bs_position | default: 'top-left'
+  assign badge_pos_mobile = settings.bs_position_mobile | default: 'same'
+  assign badge_anim = settings.bs_animation | default: 'none'
+-%}
+
+{%- if bs_render and badge_text != blank -%}
+  {%- capture badge_style_vars -%}
+    {%- case layout_num -%}
+      {%- when '1' -%}
+        --bs-text: {{ settings.bs_l1_text }}; --bs-bg: {{ settings.bs_l1_bg }}; --bs-grad1: {{ settings.bs_l1_grad1 }}; --bs-grad2: {{ settings.bs_l1_grad2 }}; --bs-border-color: {{ settings.bs_l1_border_color }}; --bs-border-w: {{ settings.bs_l1_border_width }}px; --bs-radius: {{ settings.bs_l1_radius }}px; --bs-shadow-a: {{ settings.bs_l1_shadow | divided_by: 100.0 }}; --bs-glow: {{ settings.bs_l1_glow }}; --bs-size-m: {{ settings.bs_l1_size_m }}px; --bs-size-d: {{ settings.bs_l1_size_d }}px; --bs-tracking: {{ settings.bs_l1_tracking }}px;
+        {%- assign badge_bg_style = settings.bs_l1_bg_style -%}
+      {%- when '2' -%}
+        --bs-text: {{ settings.bs_l2_text }}; --bs-bg: {{ settings.bs_l2_bg }}; --bs-grad1: {{ settings.bs_l2_grad1 }}; --bs-grad2: {{ settings.bs_l2_grad2 }}; --bs-border-color: {{ settings.bs_l2_border_color }}; --bs-border-w: {{ settings.bs_l2_border_width }}px; --bs-radius: {{ settings.bs_l2_radius }}px; --bs-shadow-a: {{ settings.bs_l2_shadow | divided_by: 100.0 }}; --bs-glow: {{ settings.bs_l2_glow }}; --bs-size-m: {{ settings.bs_l2_size_m }}px; --bs-size-d: {{ settings.bs_l2_size_d }}px; --bs-tracking: {{ settings.bs_l2_tracking }}px;
+        {%- assign badge_bg_style = settings.bs_l2_bg_style -%}
+      {%- when '3' -%}
+        --bs-text: {{ settings.bs_l3_text }}; --bs-bg: {{ settings.bs_l3_bg }}; --bs-grad1: {{ settings.bs_l3_grad1 }}; --bs-grad2: {{ settings.bs_l3_grad2 }}; --bs-border-color: {{ settings.bs_l3_border_color }}; --bs-border-w: {{ settings.bs_l3_border_width }}px; --bs-radius: {{ settings.bs_l3_radius }}px; --bs-shadow-a: {{ settings.bs_l3_shadow | divided_by: 100.0 }}; --bs-glow: {{ settings.bs_l3_glow }}; --bs-size-m: {{ settings.bs_l3_size_m }}px; --bs-size-d: {{ settings.bs_l3_size_d }}px; --bs-tracking: {{ settings.bs_l3_tracking }}px;
+        {%- assign badge_bg_style = settings.bs_l3_bg_style -%}
+      {%- when '4' -%}
+        --bs-text: {{ settings.bs_l4_text }}; --bs-bg: {{ settings.bs_l4_bg }}; --bs-grad1: {{ settings.bs_l4_grad1 }}; --bs-grad2: {{ settings.bs_l4_grad2 }}; --bs-border-color: {{ settings.bs_l4_border_color }}; --bs-border-w: {{ settings.bs_l4_border_width }}px; --bs-radius: {{ settings.bs_l4_radius }}px; --bs-shadow-a: {{ settings.bs_l4_shadow | divided_by: 100.0 }}; --bs-glow: {{ settings.bs_l4_glow }}; --bs-size-m: {{ settings.bs_l4_size_m }}px; --bs-size-d: {{ settings.bs_l4_size_d }}px; --bs-tracking: {{ settings.bs_l4_tracking }}px;
+        {%- assign badge_bg_style = settings.bs_l4_bg_style -%}
+      {%- when '5' -%}
+        --bs-text: {{ settings.bs_l5_text }}; --bs-bg: {{ settings.bs_l5_bg }}; --bs-grad1: {{ settings.bs_l5_grad1 }}; --bs-grad2: {{ settings.bs_l5_grad2 }}; --bs-border-color: {{ settings.bs_l5_border_color }}; --bs-border-w: {{ settings.bs_l5_border_width }}px; --bs-radius: {{ settings.bs_l5_radius }}px; --bs-shadow-a: {{ settings.bs_l5_shadow | divided_by: 100.0 }}; --bs-glow: {{ settings.bs_l5_glow }}; --bs-size-m: {{ settings.bs_l5_size_m }}px; --bs-size-d: {{ settings.bs_l5_size_d }}px; --bs-tracking: {{ settings.bs_l5_tracking }}px;
+        {%- assign badge_bg_style = settings.bs_l5_bg_style -%}
+    {%- endcase -%}
+    {%- if badge_pos == 'custom' or badge_pos_mobile == 'custom' -%}
+      --bs-x: {{ settings.bs_custom_x }}%; --bs-y: {{ settings.bs_custom_y }}%;
+    {%- endif -%}
+  {%- endcapture -%}
+
+  <span
+    class="badge-system badge-system--layout-{{ layout_num }} badge-system--{{ badge_pos }} badge-system--ctx-{{ badge_context }} badge-system--type-{{ badge_type }} badge-system--bg-{{ badge_bg_style | default: 'solid' }}{% if badge_anim != 'none' %} badge-system--anim-{{ badge_anim }}{% endif %}{% if settings.bs_anim_mobile %} badge-system--anim-mobile{% endif %}{% unless settings.bs_show_mobile %} badge-system--hide-mobile{% endunless %}{% unless settings.bs_show_desktop %} badge-system--hide-desktop{% endunless %}{% if badge_pos_mobile != 'same' %} badge-system--m-{{ badge_pos_mobile }}{% endif %}"
+    style="{{ badge_style_vars | strip | strip_newlines }}"
+  >
+    <span class="badge-system__glow" aria-hidden="true"></span>
+    <span class="badge-system__inner">
+      {%- if layout_num == '4' and settings.bs_l4_icon -%}
+        <svg class="badge-system__icon" aria-hidden="true" focusable="false" viewBox="0 0 20 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.5L10 14.11l-4.94 2.6.94-5.5-4-3.9 5.53-.8L10 1.5z"/>
+        </svg>
+      {%- endif -%}
+      <span class="badge-system__label">{{ badge_text | escape }}</span>
+      <span class="badge-system__shine" aria-hidden="true"></span>
+    </span>
+  </span>
+{%- endif -%}

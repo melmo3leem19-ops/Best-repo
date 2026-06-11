@@ -214,6 +214,8 @@
     "product_total": "إجمالي المنتج",
     "product_badge_sold_out": "نفدت الكمية",
     "product_badge_sale": "تخفيض",
+    "product_badge_best_seller": "الأكثر مبيعاً",
+    "product_badge_best_value": "أفضل قيمة",
     "product_card_placeholder": "عنوان المنتج",
     "placeholder_image": "صورة",
     "quantity": "الكمية",

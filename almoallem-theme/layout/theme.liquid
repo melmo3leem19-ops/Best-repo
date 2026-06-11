@@ -34,6 +34,9 @@
     {%- render 'scripts' -%}
     {%- render 'theme-styles-variables' -%}
     {%- render 'color-schemes' -%}
+    {% if settings.badge_system_enabled %}
+      {{ 'badge-system.css' | asset_url | stylesheet_tag }}
+    {% endif %}
 
     {% if request.design_mode %}
       {%- render 'theme-editor' -%}
