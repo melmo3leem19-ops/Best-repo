@@ -1,0 +1,108 @@
+{% comment %}
+  Cart Drawer – Main content
+  This file renders the drawer's HTML including items, free shipping tracker, and summary.
+  Tracker position is controlled by settings.free_shipping_tracker_position.
+{% endcomment %}
+
+<div class="cart-drawer">
+  <div class="cart-drawer__header">
+    <h2 class="cart-drawer__title">{{ 'content.cart' | t }}</h2>
+    <button 
+      class="cart-drawer__close button button-unstyled" 
+      type="button" 
+      aria-label="{{ 'actions.close' | t }}"
+      on:click="cart-drawer-component/close"
+    >
+      {% render 'icon-close' %}
+    </button>
+  </div>
+
+  <div class="cart-drawer__content">
+    {% if cart.empty? %}
+      <div class="cart-drawer__empty">
+        {%- if settings.free_shipping_tracker_enabled and settings.free_shipping_tracker_show_empty -%}
+          <div class="cart-drawer__free-shipping cart-drawer__free-shipping--empty">
+            {% render 'free-shipping-tracker' %}
+          </div>
+        {%- endif -%}
+        <p>{{ 'content.cart_empty' | t }}</p>
+        <a href="{{ settings.empty_cart_button_link | default: routes.all_products_collection_url }}" class="button">
+          {{ 'actions.continue_shopping' | t }}
+        </a>
+      </div>
+    {% else %}
+
+      {%- comment -%} Position: above items {%- endcomment -%}
+      {%- if settings.free_shipping_tracker_position == 'above_items' -%}
+        <div class="cart-drawer__free-shipping">
+          {% render 'free-shipping-tracker' %}
+        </div>
+      {%- endif -%}
+
+      <div class="cart-drawer__items">
+        {% render 'cart-products' %}
+      </div>
+
+      {%- comment -%} Position: below items (default) {%- endcomment -%}
+      {%- if settings.free_shipping_tracker_position == 'below_items' or settings.free_shipping_tracker_position == blank -%}
+        <div class="cart-drawer__free-shipping">
+          {% render 'free-shipping-tracker' %}
+        </div>
+      {%- endif -%}
+
+      <div class="cart-drawer__summary">
+        {%- comment -%} Position: above summary {%- endcomment -%}
+        {%- if settings.free_shipping_tracker_position == 'above_summary' -%}
+          <div class="cart-drawer__free-shipping">
+            {% render 'free-shipping-tracker' %}
+          </div>
+        {%- endif -%}
+        {% render 'cart-summary', accelerated_checkout_buttons_layout: 'vertical' %}
+      </div>
+
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .cart-drawer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-background);
+  }
+  .cart-drawer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .cart-drawer__title {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  .cart-drawer__close {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .cart-drawer__content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 1rem;
+  }
+  .cart-drawer__empty {
+    text-align: center;
+    padding: 2rem;
+  }
+  .cart-drawer__free-shipping {
+    padding: 0.75rem 1.5rem;
+  }
+  .cart-drawer__free-shipping--empty {
+    padding-bottom: 0;
+  }
+</style>
