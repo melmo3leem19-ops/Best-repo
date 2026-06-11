@@ -1,0 +1,1093 @@
+{%- comment -%}
+  Featured Products Section — v8
+  Fixes vs v7:
+  1. RTL arrow ICONS now flip correctly ([dir="rtl"] scaleX(-1))
+  2. Cart drawer updates without page refresh:
+     - /cart/add.js is called WITH sections=['cart-drawer','cart-icon-bubble']
+     - Shopify returns rendered section HTML in the response
+     - We inject that HTML into the matching DOM wrappers
+     - We dispatch 'cart:update' (CartAddEvent.eventName) so the theme knows
+     - We call cart-drawer-component.open() to open the drawer
+{%- endcomment -%}
+
+{%- assign ai_gen_id = section.id | replace: '_', '' | replace: '-', '' | downcase -%}
+
+{%- liquid
+  assign image_ratio_val = '100%'
+  if section.settings.image_ratio == 'portrait'
+    assign image_ratio_val = '133%'
+  elsif section.settings.image_ratio == 'landscape'
+    assign image_ratio_val = '75%'
+  elsif section.settings.image_ratio == 'wide'
+    assign image_ratio_val = '56.25%'
+  elsif section.settings.image_ratio == 'custom'
+    assign image_ratio_val = section.settings.image_ratio_custom | append: '%'
+  endif
+
+  assign layout_desktop = section.settings.layout_desktop
+  assign layout_mobile  = section.settings.layout_mobile
+-%}
+
+{% style %}
+  .ai-fp-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    padding: {{ section.settings.padding_top }}px 0 {{ section.settings.padding_bottom }}px;
+  }
+  .ai-fp__container-{{ ai_gen_id }} {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .ai-fp__header-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .ai-fp__heading-{{ ai_gen_id }} {
+    margin: 0;
+    font-size: {{ section.settings.heading_size }}px;
+    color: {{ section.settings.heading_color }};
+    line-height: 1.2;
+    flex: 1;
+  }
+  .ai-fp__viewall-{{ ai_gen_id }} {
+    display: inline-block;
+    padding: 10px 20px;
+    background: {{ section.settings.viewall_bg }};
+    color: {{ section.settings.viewall_text }};
+    text-decoration: none;
+    border-radius: {{ section.settings.viewall_radius }}px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ai-fp__viewall-{{ ai_gen_id }}:hover { background: {{ section.settings.viewall_bg_hover }}; }
+  .ai-fp__viewall-bottom-{{ ai_gen_id }} {
+    margin-top: 24px;
+    display: flex;
+    justify-content: {{ section.settings.viewall_bottom_align }};
+  }
+
+  .ai-fp__products-{{ ai_gen_id }} { position: relative; }
+
+  /* Shared list */
+  .ai-fp__list-{{ ai_gen_id }} {
+    gap: {{ section.settings.gap }}px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    --is-carousel: 0;
+  }
+  .ai-fp__list-{{ ai_gen_id }}::-webkit-scrollbar { display: none; }
+
+  /* ══ DESKTOP layout ══ */
+  {% if layout_desktop == 'carousel' %}
+    @media screen and (min-width: 750px) {
+      .ai-fp__list-{{ ai_gen_id }} {
+        display: flex;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        --is-carousel: 1;
+      }
+      .ai-fp__item-{{ ai_gen_id }} {
+        flex: 0 0 calc((100% - ({{ section.settings.visible_desktop }} - 1) * {{ section.settings.gap }}px) / {{ section.settings.visible_desktop }});
+      }
+    }
+  {% else %}
+    @media screen and (min-width: 750px) {
+      .ai-fp__list-{{ ai_gen_id }} {
+        display: grid;
+        grid-template-columns: repeat({{ section.settings.columns_desktop }}, 1fr);
+      }
+    }
+  {% endif %}
+
+  /* ══ MOBILE layout ══ */
+  {% if layout_mobile == 'carousel' %}
+    @media screen and (max-width: 749px) {
+      .ai-fp__list-{{ ai_gen_id }} {
+        display: flex;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        --is-carousel: 1;
+      }
+      .ai-fp__item-{{ ai_gen_id }} {
+        flex: 0 0 calc((100% - ({{ section.settings.visible_mobile }} - 1) * {{ section.settings.gap }}px) / {{ section.settings.visible_mobile }});
+      }
+    }
+  {% else %}
+    @media screen and (max-width: 749px) {
+      .ai-fp__list-{{ ai_gen_id }} {
+        display: grid;
+        grid-template-columns: repeat({{ section.settings.columns_mobile }}, 1fr);
+      }
+    }
+  {% endif %}
+
+  /* ── Arrows wrapper ── */
+  .ai-fp__products-{{ ai_gen_id }} { position: relative; z-index: 0; }
+
+.ai-fp__arrows-{{ ai_gen_id }} {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .ai-fp__arrow-{{ ai_gen_id }} {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    background: {{ section.settings.arrow_bg }};
+    color: {{ section.settings.arrow_color }};
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: {{ section.settings.arrow_opacity | divided_by: 100.0 }};
+    transition: background 0.25s, opacity 0.25s, transform 0.25s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    pointer-events: all;
+  }
+  .ai-fp__arrow-{{ ai_gen_id }}:hover {
+    background: {{ section.settings.arrow_bg_hover }};
+    opacity: {{ section.settings.arrow_opacity_hover | divided_by: 100.0 }};
+    transform: translateY(-50%) scale(1.08);
+  }
+  .ai-fp__arrow-{{ ai_gen_id }}:disabled { opacity: 0.2; pointer-events: none; }
+
+  /* Logical positions — these flip automatically in RTL */
+  .ai-fp__arrow-prev-{{ ai_gen_id }} { inset-inline-start: -16px; }
+  .ai-fp__arrow-next-{{ ai_gen_id }} { inset-inline-end:   -16px; }
+  .ai-fp__arrow-{{ ai_gen_id }} svg { width: 20px; height: 20px; }
+
+  /* ════════════════════════════════════════════════════════
+     FIX: Flip arrow ICONS in RTL so they point the right way.
+     In LTR: prev = left-chevron (<), next = right-chevron (>)
+     In RTL: prev = right-chevron (>), next = left-chevron (<)
+     scaleX(-1) mirrors the SVG horizontally.
+     ════════════════════════════════════════════════════════ */
+  [dir="rtl"] .ai-fp__arrow-{{ ai_gen_id }} svg {
+    transform: scaleX(-1);
+  }
+
+  /* Hide arrows on viewports where layout is GRID */
+  {% if layout_desktop != 'carousel' %}
+    @media screen and (min-width: 750px) { .ai-fp__arrows-{{ ai_gen_id }} { display: none; } }
+  {% endif %}
+  {% if layout_mobile != 'carousel' %}
+    @media screen and (max-width: 749px) { .ai-fp__arrows-{{ ai_gen_id }} { display: none; } }
+  {% endif %}
+
+  /* ── Cards ── */
+  .ai-fp__item-{{ ai_gen_id }} {
+    background: {{ section.settings.card_bg }};
+    border-radius: {{ section.settings.card_radius }}px;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    {% if section.settings.card_border_width > 0 %}
+    border: {{ section.settings.card_border_width }}px solid {{ section.settings.card_border_color }};
+    {% endif %}
+  }
+  .ai-fp__item-{{ ai_gen_id }}:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+
+  .ai-fp__img-wrap-{{ ai_gen_id }} {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding-bottom: {{ image_ratio_val }};
+    background: {{ section.settings.image_bg }};
+    overflow: hidden;
+  }
+  .ai-fp__img-wrap-{{ ai_gen_id }} img {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: {{ section.settings.image_fit }};
+    transition: transform 0.4s ease;
+  }
+  {% if section.settings.image_hover_zoom %}
+  .ai-fp__item-{{ ai_gen_id }}:hover .ai-fp__img-wrap-{{ ai_gen_id }} img { transform: scale(1.06); }
+  {% endif %}
+  .ai-fp__img-placeholder-{{ ai_gen_id }} {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ai-fp__img-placeholder-{{ ai_gen_id }} svg { width: 60%; height: 60%; max-width: 200px; }
+
+  .ai-fp__info-{{ ai_gen_id }} { padding: {{ section.settings.card_padding }}px; }
+  .ai-fp__title-{{ ai_gen_id }} {
+    margin: 0 0 6px;
+    font-size: {{ section.settings.title_size }}px;
+    color: {{ section.settings.title_color }};
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+  .ai-fp__title-{{ ai_gen_id }} a { color: inherit; text-decoration: none; }
+  .ai-fp__price-{{ ai_gen_id }} {
+    font-size: {{ section.settings.price_size }}px;
+    color: {{ section.settings.price_color }};
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .ai-fp__select-{{ ai_gen_id }} {
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: {{ section.settings.atc_radius }}px;
+    font-size: {{ section.settings.atc_font_size }}px;
+    background: #fff;
+  }
+  .ai-fp__atc-{{ ai_gen_id }} {
+    width: 100%;
+    padding: {{ section.settings.atc_padding_v }}px {{ section.settings.atc_padding_h }}px;
+    background: {{ section.settings.atc_bg }};
+    color: {{ section.settings.atc_text_color }};
+    border: none;
+    border-radius: {{ section.settings.atc_radius }}px;
+    font-size: {{ section.settings.atc_font_size }}px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s, opacity 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ai-fp__atc-{{ ai_gen_id }}:hover:not(:disabled) { background: {{ section.settings.atc_bg_hover }}; }
+  .ai-fp__atc-{{ ai_gen_id }}:disabled { opacity: 0.5; cursor: default; }
+{% endstyle %}
+
+{%- liquid
+  assign products      = section.settings.products
+  assign product_count = products.count | default: 0
+  assign show_viewall  = false
+  if section.settings.show_view_all and section.settings.view_all_link != blank
+    assign show_viewall = true
+  endif
+-%}
+
+<featured-products-section-{{ ai_gen_id }}
+  class="ai-fp-{{ ai_gen_id }}"
+  {{ section.shopify_attributes }}
+>
+  <div class="ai-fp__container-{{ ai_gen_id }}">
+
+    <div class="ai-fp__header-{{ ai_gen_id }}">
+      {%- if section.settings.heading != blank -%}
+        <h2 class="ai-fp__heading-{{ ai_gen_id }}">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+      {%- if show_viewall and section.settings.view_all_position == 'top' -%}
+        <a href="{{ section.settings.view_all_link }}" class="ai-fp__viewall-{{ ai_gen_id }}">{{ section.settings.view_all_text }}</a>
+      {%- endif -%}
+    </div>
+
+    <div class="ai-fp__products-{{ ai_gen_id }}">
+      {%- if section.settings.show_arrows -%}
+        <div class="ai-fp__arrows-{{ ai_gen_id }}">
+          <button class="ai-fp__arrow-{{ ai_gen_id }} ai-fp__arrow-prev-{{ ai_gen_id }}" aria-label="Previous" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <button class="ai-fp__arrow-{{ ai_gen_id }} ai-fp__arrow-next-{{ ai_gen_id }}" aria-label="Next" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      {%- endif -%}
+
+      <div class="ai-fp__list-{{ ai_gen_id }}" data-list>
+        {%- if product_count > 0 -%}
+          {%- for product in products -%}
+            {%- liquid
+              assign pimg = product.featured_image
+              if product.media.size > 0
+                assign pimg = product.media[0].preview_image
+              endif
+              assign multi = false
+              if product.variants.size > 1
+                assign multi = true
+              endif
+            -%}
+            <div class="ai-fp__item-{{ ai_gen_id }}">
+              <a href="{{ product.url }}" class="ai-fp__img-wrap-{{ ai_gen_id }}">
+                {%- if pimg != blank -%}
+                  <img src="{{ pimg | image_url: width: 600 }}" alt="{{ pimg.alt | escape }}" width="600" height="600" loading="lazy">
+                {%- else -%}
+                  <div class="ai-fp__img-placeholder-{{ ai_gen_id }}">{{ 'product-1' | placeholder_svg_tag }}</div>
+                {%- endif -%}
+              </a>
+              <div class="ai-fp__info-{{ ai_gen_id }}">
+                <h3 class="ai-fp__title-{{ ai_gen_id }}"><a href="{{ product.url }}">{{ product.title }}</a></h3>
+
+                {%- comment -%} ═════════════════════ PRICE WITH VARIANT PLACEHOLDER ═════════════════════ {%- endcomment -%}
+                <div class="ai-fp__price-{{ ai_gen_id }}" data-price-wrapper>
+                  {%- if multi -%}
+                    السعر عند الأخيار
+                  {%- else -%}
+                    {{ product.price | money }}
+                  {%- endif -%}
+                </div>
+
+                {%- if section.settings.show_quick_add -%}
+                  {%- if multi -%}
+                    <select class="ai-fp__select-{{ ai_gen_id }}" data-variant-select>
+                      <option value="" disabled selected>{{ section.settings.variant_placeholder }}</option>
+                      {%- for variant in product.variants -%}
+                        <option
+                          value="{{ variant.id }}"
+                          data-variant-price="{{ variant.price | money }}"
+                          {% unless variant.available %}disabled{% endunless %}
+                        >
+                          {{ variant.title }}{% unless variant.available %} – {{ 'products.product.sold_out' | t | default: 'Sold out' }}{% endunless %}
+                        </option>
+                      {%- endfor -%}
+                    </select>
+                  {%- endif -%}
+                  <button
+                    type="button"
+                    class="ai-fp__atc-{{ ai_gen_id }}"
+                    data-atc
+                    data-vid="{% unless multi %}{{ product.variants.first.id }}{% endunless %}"
+                    {% if multi or product.available == false %}disabled{% endif %}
+                  >
+                    {%- if product.available -%}{{ section.settings.atc_text }}{%- else -%}{{ section.settings.soldout_text }}{%- endif -%}
+                  </button>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endfor -%}
+        {%- else -%}
+          {%- for i in (1..section.settings.columns_desktop) -%}
+            <div class="ai-fp__item-{{ ai_gen_id }}">
+              <div class="ai-fp__img-wrap-{{ ai_gen_id }}">
+                <div class="ai-fp__img-placeholder-{{ ai_gen_id }}">{{ 'product-1' | placeholder_svg_tag }}</div>
+              </div>
+              <div class="ai-fp__info-{{ ai_gen_id }}">
+                <h3 class="ai-fp__title-{{ ai_gen_id }}">{{ 'onboarding.product_title' | t }}</h3>
+                <div class="ai-fp__price-{{ ai_gen_id }}">0.000 KWD</div>
+              </div>
+            </div>
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+    </div>
+
+    {%- if show_viewall and section.settings.view_all_position == 'bottom' -%}
+      <div class="ai-fp__viewall-bottom-{{ ai_gen_id }}">
+        <a href="{{ section.settings.view_all_link }}" class="ai-fp__viewall-{{ ai_gen_id }}">{{ section.settings.view_all_text }}</a>
+      </div>
+    {%- endif -%}
+
+  </div>
+</featured-products-section-{{ ai_gen_id }}>
+
+<script>
+(function () {
+  'use strict';
+
+  var SECTION_ID = '{{ ai_gen_id }}';
+
+  /* ════════════════════════════════════════════════════════════════
+     CART HELPERS
+     Key insight: /cart/add.js accepts a `sections` array in the body.
+     Shopify renders those sections and returns their HTML inside
+     data.sections — we inject that HTML into the DOM directly.
+     This is the native mechanism the theme uses via its own forms.
+     We also dispatch 'cart:update' which is CartAddEvent.eventName
+     in this theme (from assets/events.js: ThemeEvents.cartUpdate).
+     The cart-drawer-component element listens for this event.
+     ════════════════════════════════════════════════════════════════ */
+
+  /* Section IDs to request — Shopify ignores IDs that don't exist */
+  var CART_SECTIONS = ['cart-drawer', 'cart-icon-bubble', 'cart-notification'];
+
+  async function addToCartWithSections(variantId) {
+    const res = await fetch('/cart/add.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        id: Number(variantId),
+        quantity: 1,
+        sections: CART_SECTIONS
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.description || 'Add to cart failed');
+    }
+
+    return res.json();
+  }
+
+  function injectSectionHTML(sections) {
+    if (!sections || typeof sections !== 'object') return;
+    Object.entries(sections).forEach(function ([sectionId, html]) {
+      if (!html) return;
+      const wrapper = document.getElementById('shopify-section-' + sectionId);
+      if (!wrapper) return;
+      /* Parse the returned HTML and replace the wrapper's innerHTML */
+      const doc   = new DOMParser().parseFromString(html, 'text/html');
+      const fresh = doc.getElementById('shopify-section-' + sectionId);
+      if (fresh) {
+        wrapper.innerHTML = fresh.innerHTML;
+      } else {
+        /* Fallback: the section render may not include a wrapper */
+        wrapper.innerHTML = html;
+      }
+    });
+  }
+
+  function updateCartCount(itemCount) {
+    if (typeof itemCount !== 'number') return;
+    document.querySelectorAll(
+      '.cart-count, .cart__count, #CartCount, [data-cart-count], [data-cart-item-count], .js-cart-count, .cart-item-count, .cart-count-bubble'
+    ).forEach(function (el) { el.textContent = itemCount; });
+  }
+
+  function dispatchCartUpdate(cartData, sections) {
+    /*
+      Dispatch 'cart:update' — this is CartAddEvent.eventName in assets/events.js.
+      The cart-drawer-component listens for this and will auto-open if it has
+      the `auto-open` attribute. Passing `sections` lets any theme listener
+      know which sections were updated.
+    */
+    document.dispatchEvent(new CustomEvent('cart:update', {
+      bubbles: true,
+      detail: {
+        resource: cartData,
+        sourceId: 'featured-products-section-' + SECTION_ID,
+        data: {
+          source: 'product-form',
+          itemCount: cartData && cartData.item_count,
+          sections: sections || {}
+        }
+      }
+    }));
+  }
+
+  function openCartDrawer(triggerEl) {
+    /* cart-drawer-component is the custom element defined in assets/cart-drawer.js */
+    const drawer = document.querySelector('cart-drawer-component');
+    if (drawer) {
+      if (typeof drawer.open === 'function') { drawer.open(triggerEl); return; }
+      if (typeof drawer.showDialog === 'function') { drawer.showDialog(); return; }
+    }
+    /* Fallback for other cart implementations */
+    const notif = document.querySelector('cart-notification');
+    if (notif && typeof notif.open === 'function') { notif.open(triggerEl); return; }
+    const fallbackSelectors = ['#CartDrawer', '#cart-drawer', '.cart-drawer', '[data-cart-drawer]'];
+    for (const sel of fallbackSelectors) {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.classList.add('is-open', 'active');
+        el.removeAttribute('hidden');
+        return;
+      }
+    }
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     CUSTOM ELEMENT
+     ════════════════════════════════════════════════════════════════ */
+  class FeaturedProductsSection extends HTMLElement {
+    connectedCallback() {
+      this.listEl   = this.querySelector('[data-list]');
+      this.prevBtn  = this.querySelector('.ai-fp__arrow-prev-' + SECTION_ID);
+      this.nextBtn  = this.querySelector('.ai-fp__arrow-next-' + SECTION_ID);
+
+      if (this.listEl) {
+        if (this.prevBtn) this.prevBtn.addEventListener('click', () => this.slide('prev'));
+        if (this.nextBtn) this.nextBtn.addEventListener('click', () => this.slide('next'));
+        this.listEl.addEventListener('scroll', () => this.refreshArrows(), { passive: true });
+        window.addEventListener('resize', () => this.refreshArrows(), { passive: true });
+        requestAnimationFrame(() => this.refreshArrows());
+      }
+
+      this.setupATC();
+    }
+
+    /* RTL is detected from the computed direction of the list element itself,
+       which inherits dir="rtl" from the <html> element on Arabic pages. */
+    get isRTL() {
+      return this.listEl ? getComputedStyle(this.listEl).direction === 'rtl' : false;
+    }
+
+    /* Check if the active layout (grid vs carousel) depends on viewport via CSS custom prop */
+    get isCarousel() {
+      if (!this.listEl) return false;
+      return getComputedStyle(this.listEl).getPropertyValue('--is-carousel').trim() === '1';
+    }
+
+    slide(dir) {
+      if (!this.listEl || !this.isCarousel) return;
+      const amount = this.listEl.offsetWidth * 0.85;
+      const rtl    = this.isRTL;
+      /*
+        RTL Chrome/Edge: scrollLeft = 0 at right edge (start), goes negative toward left.
+        scrollBy({ left: +N }) moves toward right (backward in RTL).
+        scrollBy({ left: -N }) moves toward left  (forward  in RTL).
+      */
+      const delta = dir === 'prev'
+        ? (rtl ? +amount : -amount)
+        : (rtl ? -amount : +amount);
+      this.listEl.scrollBy({ left: delta, behavior: 'smooth' });
+    }
+
+    refreshArrows() {
+      if (!this.prevBtn || !this.nextBtn || !this.listEl || !this.isCarousel) return;
+      const sl  = this.listEl.scrollLeft;
+      const sw  = this.listEl.scrollWidth;
+      const cw  = this.listEl.clientWidth;
+      const tol = 2;
+      const rtl = this.isRTL;
+
+      if (rtl) {
+        /* scrollLeft = 0 → at start (right edge) → can't go further right → prev disabled */
+        this.prevBtn.disabled = sl >= -tol;
+        /* scrollLeft ≈ -(sw-cw) → at end (left edge) → can't go further left → next disabled */
+        this.nextBtn.disabled = sl <= -(sw - cw - tol);
+      } else {
+        this.prevBtn.disabled = sl <= tol;
+        this.nextBtn.disabled = sl >= sw - cw - tol;
+      }
+    }
+
+    setupATC() {
+      this.querySelectorAll('.ai-fp__item-' + SECTION_ID).forEach(item => {
+        const btn      = item.querySelector('[data-atc]');
+        const selectEl = item.querySelector('[data-variant-select]');
+        if (!btn) return;
+
+        /* ═══════════════════ VARIANT DROPDOWN WIRING (WITH PRICE UPDATE) ═══════════════════ */
+        if (selectEl) {
+          selectEl.addEventListener('change', () => {
+            const opt       = selectEl.options[selectEl.selectedIndex];
+            btn.dataset.vid = opt?.value || '';
+            btn.disabled    = !opt?.value || opt.disabled;
+            btn.textContent = (opt?.disabled)
+              ? '{{ section.settings.soldout_text }}'
+              : '{{ section.settings.atc_text }}';
+
+            // Update price when a variant is selected
+            const priceWrapper = item.querySelector('[data-price-wrapper]');
+            if (priceWrapper) {
+              if (opt && opt.value && !opt.disabled) {
+                const price = opt.getAttribute('data-variant-price');
+                priceWrapper.textContent = price || '';
+              } else {
+                priceWrapper.textContent = 'السعر عند الأخيار';
+              }
+            }
+          });
+
+          btn.disabled    = true;
+          btn.dataset.vid = '';
+
+          // Set initial price text on page load for multi-variant products
+          const priceWrapper = item.querySelector('[data-price-wrapper]');
+          if (priceWrapper) {
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            if (selectedOpt && selectedOpt.value && !selectedOpt.disabled) {
+              priceWrapper.textContent = selectedOpt.getAttribute('data-variant-price') || '';
+            } else {
+              priceWrapper.textContent = 'السعر عند الأخيار';
+            }
+          }
+        }
+
+        /* ═══════════════════ ATC CLICK HANDLER ═══════════════════ */
+        btn.addEventListener('click', async () => {
+          const vid = btn.dataset.vid;
+          if (!vid || btn.disabled) return;
+
+          const origText = btn.textContent.trim();
+          btn.disabled    = true;
+          btn.textContent = '{{ 'products.product.adding_to_cart' | t | default: 'جاري الإضافة...' }}';
+
+          try {
+            /* addToCartWithSections includes sections=['cart-drawer','cart-icon-bubble']
+               so Shopify returns fresh HTML for those sections in data.sections */
+            const data     = await addToCartWithSections(vid);
+            const sections = data.sections || {};
+
+            /* 1. Inject refreshed section HTML (cart drawer contents, icon bubble) */
+            injectSectionHTML(sections);
+
+            /* 2. Update any standalone cart count badges */
+            updateCartCount(data.item_count);
+
+            /* 3. Dispatch 'cart:update' — theme's CartAddEvent.eventName
+               cart-drawer-component listens to this and auto-opens if auto-open attr is set */
+            dispatchCartUpdate(data, sections);
+
+            /* 4. Explicitly open the cart drawer */
+            openCartDrawer(btn);
+
+            btn.textContent = '{{ 'products.product.added_to_cart' | t | default: 'تمت الإضافة!' }}';
+
+          } catch (e) {
+            console.warn('[featured-products] ATC error:', e.message);
+            btn.textContent = '{{ 'cart.general.cart_error' | t | default: 'خطأ — حاول مجدداً' }}';
+          } finally {
+            setTimeout(() => {
+              btn.textContent = origText;
+              if (selectEl) {
+                const opt    = selectEl.options[selectEl.selectedIndex];
+                btn.disabled = !opt?.value || opt.disabled;
+              } else {
+                btn.disabled = false;
+              }
+            }, 2200);
+          }
+        });
+      });
+    }
+  }
+
+  const elName = 'featured-products-section-' + SECTION_ID;
+  if (!customElements.get(elName)) {
+    customElements.define(elName, FeaturedProductsSection);
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Featured products",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Products"
+    },
+    {
+      "type": "product_list",
+      "id": "products",
+      "label": "Products",
+      "limit": 16
+    },
+    {
+      "type": "header",
+      "content": "Desktop layout"
+    },
+    {
+      "type": "select",
+      "id": "layout_desktop",
+      "label": "Desktop layout",
+      "options": [
+        { "value": "grid",     "label": "Grid" },
+        { "value": "carousel", "label": "Carousel" }
+      ],
+      "default": "carousel"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Grid columns (desktop)",
+      "min": 2, "max": 6, "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "visible_desktop",
+      "label": "Carousel visible items (desktop)",
+      "min": 1, "max": 6, "step": 1,
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Mobile layout"
+    },
+    {
+      "type": "select",
+      "id": "layout_mobile",
+      "label": "Mobile layout",
+      "options": [
+        { "value": "grid",     "label": "Grid" },
+        { "value": "carousel", "label": "Carousel" }
+      ],
+      "default": "carousel"
+    },
+    {
+      "type": "range",
+      "id": "columns_mobile",
+      "label": "Grid columns (mobile)",
+      "min": 1, "max": 3, "step": 1,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "visible_mobile",
+      "label": "Carousel visible items (mobile)",
+      "min": 1, "max": 3, "step": 1,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap between products",
+      "min": 5, "max": 50, "step": 5,
+      "default": 20, "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Section padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 0, "max": 100, "step": 5,
+      "default": 40, "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 0, "max": 100, "step": 5,
+      "default": 40, "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Featured products"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Font size",
+      "min": 16, "max": 48, "step": 2,
+      "default": 28, "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Color",
+      "default": "#3b2314"
+    },
+    {
+      "type": "header",
+      "content": "View all button"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "label": "Show view all button",
+      "default": true
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "Link"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "view_all_text",
+      "label": "Button text",
+      "default": "View all"
+    },
+    {
+      "type": "select",
+      "id": "view_all_position",
+      "label": "Position",
+      "options": [
+        { "value": "top",    "label": "Top right" },
+        { "value": "bottom", "label": "Below products" }
+      ],
+      "default": "bottom"
+    },
+    {
+      "type": "select",
+      "id": "viewall_bottom_align",
+      "label": "Bottom button alignment",
+      "options": [
+        { "value": "flex-start", "label": "Left" },
+        { "value": "center",     "label": "Center" },
+        { "value": "flex-end",   "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "color",
+      "id": "viewall_bg",
+      "label": "Background",
+      "default": "#c0392b"
+    },
+    {
+      "type": "color",
+      "id": "viewall_bg_hover",
+      "label": "Hover background",
+      "default": "#a02d23"
+    },
+    {
+      "type": "color",
+      "id": "viewall_text",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "viewall_radius",
+      "label": "Border radius",
+      "min": 0, "max": 50, "step": 5,
+      "default": 5, "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Carousel arrows"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrows",
+      "label": "Show navigation arrows",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "arrow_bg",
+      "label": "Background",
+      "default": "#c0392b"
+    },
+    {
+      "type": "color",
+      "id": "arrow_bg_hover",
+      "label": "Hover background",
+      "default": "#a02d23"
+    },
+    {
+      "type": "color",
+      "id": "arrow_color",
+      "label": "Icon color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "arrow_opacity",
+      "label": "Opacity",
+      "min": 10, "max": 100, "step": 5,
+      "default": 80, "unit": "%"
+    },
+    {
+      "type": "range",
+      "id": "arrow_opacity_hover",
+      "label": "Hover opacity",
+      "min": 10, "max": 100, "step": 5,
+      "default": 100, "unit": "%"
+    },
+    {
+      "type": "header",
+      "content": "Product card"
+    },
+    {
+      "type": "color",
+      "id": "card_bg",
+      "label": "Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Border radius",
+      "min": 0, "max": 30, "step": 2,
+      "default": 8, "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "card_border_width",
+      "label": "Border width",
+      "min": 0, "max": 4, "step": 1,
+      "default": 1, "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "card_border_color",
+      "label": "Border color",
+      "default": "#e5e7eb"
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "label": "Content padding",
+      "min": 8, "max": 32, "step": 2,
+      "default": 14, "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Product image"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        { "value": "square",    "label": "Square 1:1" },
+        { "value": "portrait",  "label": "Portrait 3:4" },
+        { "value": "landscape", "label": "Landscape 4:3" },
+        { "value": "wide",      "label": "Wide 16:9" },
+        { "value": "custom",    "label": "Custom" }
+      ],
+      "default": "square"
+    },
+    {
+      "type": "range",
+      "id": "image_ratio_custom",
+      "label": "Custom ratio height %",
+      "min": 40, "max": 160, "step": 5,
+      "default": 100
+    },
+    {
+      "type": "select",
+      "id": "image_fit",
+      "label": "Image fit",
+      "options": [
+        { "value": "cover",   "label": "Cover (crop)" },
+        { "value": "contain", "label": "Contain (full)" }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "color",
+      "id": "image_bg",
+      "label": "Image background",
+      "default": "#f2f2f2"
+    },
+    {
+      "type": "checkbox",
+      "id": "image_hover_zoom",
+      "label": "Zoom on hover",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Product title"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Font size",
+      "min": 12, "max": 24, "step": 1,
+      "default": 15, "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Color",
+      "default": "#3b2314"
+    },
+    {
+      "type": "header",
+      "content": "Price"
+    },
+    {
+      "type": "range",
+      "id": "price_size",
+      "label": "Font size",
+      "min": 12, "max": 24, "step": 1,
+      "default": 15, "unit": "px"
+    },
+    {
+      "type": "color",
+      "id": "price_color",
+      "label": "Color",
+      "default": "#c0392b"
+    },
+    {
+      "type": "header",
+      "content": "Add to cart button"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_quick_add",
+      "label": "Show add to cart button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "variant_placeholder",
+      "label": "Variant dropdown placeholder",
+      "default": "قم بالأختيار"
+    },
+    {
+      "type": "text",
+      "id": "atc_text",
+      "label": "Add to cart text",
+      "default": "أضف الى السلة"
+    },
+    {
+      "type": "text",
+      "id": "soldout_text",
+      "label": "Sold out text",
+      "default": "نفذت الكمية"
+    },
+    {
+      "type": "color",
+      "id": "atc_bg",
+      "label": "Background",
+      "default": "#c0392b"
+    },
+    {
+      "type": "color",
+      "id": "atc_bg_hover",
+      "label": "Hover background",
+      "default": "#a02d23"
+    },
+    {
+      "type": "color",
+      "id": "atc_text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "atc_font_size",
+      "label": "Font size",
+      "min": 11, "max": 20, "step": 1,
+      "default": 14, "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "atc_padding_v",
+      "label": "Vertical padding",
+      "min": 6, "max": 24, "step": 2,
+      "default": 12, "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "atc_padding_h",
+      "label": "Horizontal padding",
+      "min": 8, "max": 40, "step": 2,
+      "default": 16, "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "atc_radius",
+      "label": "Border radius",
+      "min": 0, "max": 50, "step": 5,
+      "default": 5, "unit": "px"
+    }
+  ],
+  "presets": [
+    { "name": "Featured products" }
+  ]
+}
+{% endschema %}
