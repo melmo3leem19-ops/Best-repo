@@ -9,6 +9,7 @@
  */
 {
   "actions": {
+    "view_collection": "عرض المجموعة",
     "add_to_cart": "أضف إلى السلة",
     "remove_discount": "إزالة الخصم {{ code }}",
     "show_more": "عرض المزيد",
@@ -67,6 +68,7 @@
     }
   },
   "accessibility": {
+    "collection_showcase": "واجهة عرض المجموعات",
     "account": "حساب",
     "cart": "السلة",
     "cart_count": "إجمالي العناصر في السلة",
@@ -116,6 +118,14 @@
     "view_pricing_info": "عرض معلومات التسعير"
   },
   "content": {
+    "ucs_product_count": {
+      "zero": "لا توجد منتجات",
+      "one": "منتج واحد",
+      "two": "منتجان",
+      "few": "{{ count }} منتجات",
+      "many": "{{ count }} منتجًا",
+      "other": "{{ count }} منتج"
+    },
     "terms_and_policies": "الشروط والسياسات",
     "cart_estimated_total": "المجموع التقديري",
     "cart_title": "السلة",

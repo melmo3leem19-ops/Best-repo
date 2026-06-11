@@ -1,0 +1,678 @@
+/* ==========================================================================
+   Universal Collection Showcase (.ucs)
+   Mode styles, hover effects, reveal animations.
+   Conventions (docs/almoallem/conventions-brief.md):
+   - transform/opacity animations only
+   - tokenized durations/easings
+   - logical properties only (RTL-safe)
+   - mobile-first, BEM-ish .ucs__* naming
+   - full prefers-reduced-motion override at the end of this file
+   ========================================================================== */
+
+.ucs {
+  --motion-instant: 80ms;
+  --motion-fast: 180ms;
+  --motion-normal: 350ms;
+  --motion-slow: 600ms;
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-sharp: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pragmatic "virtual rendering": defer paint/layout of offscreen sections. */
+.ucs--cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.ucs__header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: var(--ucs-heading-align, start);
+  text-align: var(--ucs-heading-align, start);
+  padding-block-end: 24px;
+}
+
+.ucs__heading {
+  margin: 0;
+}
+
+.ucs__description {
+  max-width: 64ch;
+}
+
+/* Hide the duplicate top heading when the visible viewport is split mode
+   (split renders heading + description inside its sticky panel). */
+@media screen and (min-width: 750px) {
+  .ucs--d-split .ucs__header {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 749px) {
+  .ucs--m-split .ucs__header {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Card (shared by all 9 modes)
+   -------------------------------------------------------------------------- */
+
+.ucs__item {
+  min-width: 0;
+}
+
+.ucs-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ucs-radius, 8px);
+  height: 100%;
+}
+
+.ucs-card__link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ucs-card__link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.ucs-card__media {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ucs-radius, 8px);
+  aspect-ratio: var(--ucs-aspect-mobile, 4 / 5);
+}
+
+@media screen and (min-width: 750px) {
+  .ucs-card__media {
+    aspect-ratio: var(--ucs-aspect, 4 / 5);
+  }
+}
+
+.ucs-card__image,
+.ucs-card__media > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ucs-card__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgb(0 0 0 / var(--ucs-scrim-alpha, 0.55)) 0%,
+    rgb(0 0 0 / 0) 60%
+  );
+}
+
+.ucs-card__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.ucs-card__content-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.ucs-card__title {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+
+.ucs-card__count,
+.ucs-card__text {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.85;
+}
+
+.ucs-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-start: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ucs-card__cta-arrow {
+  display: inline-block;
+  transition: transform var(--motion-fast) var(--ease-sharp);
+}
+
+/* Mirror the directional arrow glyph for RTL. */
+[dir='rtl'] .ucs-card__cta-arrow {
+  transform: scaleX(-1);
+}
+
+.ucs-card--placeholder .ucs-card__link {
+  cursor: default;
+}
+
+/* Text position: overlay bottom (default) */
+.ucs--text-overlay_bottom .ucs-card__content,
+.ucs--text-overlay_center .ucs-card__content {
+  position: absolute;
+  inset: 0;
+  padding: 16px;
+  color: rgb(255 255 255);
+  justify-content: flex-end;
+}
+
+.ucs--text-overlay_center .ucs-card__content {
+  justify-content: center;
+}
+
+.ucs--text-overlay_center .ucs-card__content-inner {
+  align-items: center;
+  text-align: center;
+}
+
+.ucs--text-overlay_center .ucs-card__scrim {
+  background: rgb(0 0 0 / var(--ucs-scrim-alpha, 0.55));
+}
+
+/* Text position: below image */
+.ucs--text-below .ucs-card__content {
+  position: static;
+  padding-block: 12px 4px;
+}
+
+.ucs--text-below .ucs-card__scrim {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Mode: carousel (built on the theme slideshow engine)
+   -------------------------------------------------------------------------- */
+
+.ucs__carousel .ucs__slide {
+  height: auto;
+}
+
+.ucs__carousel .ucs__item,
+.ucs__carousel .ucs-card {
+  height: 100%;
+}
+
+/* Swipe off: vertical panning only; arrows/dots still work (programmatic scroll). */
+.ucs--no-swipe slideshow-slides {
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
+}
+
+/* Progress indicator (scaleX, never width). JS sets --ucs-progress (0..1). */
+.ucs__progress {
+  position: relative;
+  block-size: 3px;
+  margin-block-start: 16px;
+  margin-inline: auto;
+  inline-size: min(100%, 320px);
+  background: rgb(128 128 128 / 0.25);
+  background: rgb(from currentColor r g b / 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ucs__progress-bar {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  border-radius: 999px;
+  transform: scaleX(var(--ucs-progress, 0));
+  transform-origin: 0 50%;
+  transition: transform var(--motion-normal) var(--ease-smooth);
+}
+
+[dir='rtl'] .ucs__progress-bar {
+  transform-origin: 100% 50%;
+}
+
+/* --------------------------------------------------------------------------
+   Mode: grid
+   -------------------------------------------------------------------------- */
+
+.ucs--grid .ucs__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--ucs-cols-mobile, 2), 1fr);
+  gap: var(--ucs-gap, 16px);
+}
+
+@media screen and (min-width: 750px) {
+  .ucs--grid .ucs__grid {
+    grid-template-columns: repeat(var(--ucs-cols, 4), 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mode: bento (reuses snippets/bento-grid.liquid; needs full-height cards)
+   -------------------------------------------------------------------------- */
+
+.ucs--bento .bento-box__item .ucs__item,
+.ucs--bento .bento-box__item .ucs-card {
+  height: 100%;
+}
+
+.ucs--bento .bento-box__item .ucs-card__media {
+  height: 100%;
+  aspect-ratio: auto;
+  min-block-size: 220px;
+}
+
+/* --------------------------------------------------------------------------
+   Mode: masonry (CSS columns, no JS library)
+   -------------------------------------------------------------------------- */
+
+.ucs--masonry .ucs__masonry {
+  columns: var(--ucs-cols-mobile, 2);
+  column-gap: var(--ucs-gap, 16px);
+}
+
+@media screen and (min-width: 750px) {
+  .ucs--masonry .ucs__masonry {
+    columns: var(--ucs-cols, 4);
+  }
+}
+
+.ucs--masonry .ucs__item {
+  break-inside: avoid;
+  margin-block-end: var(--ucs-gap, 16px);
+}
+
+/* Cycle aspect ratios so the masonry flow reads organic, not uniform. */
+.ucs--masonry .ucs__item:nth-child(4n + 1) .ucs-card__media {
+  aspect-ratio: 3 / 4;
+}
+
+.ucs--masonry .ucs__item:nth-child(4n + 2) .ucs-card__media {
+  aspect-ratio: 1 / 1;
+}
+
+.ucs--masonry .ucs__item:nth-child(4n + 3) .ucs-card__media {
+  aspect-ratio: 4 / 5;
+}
+
+.ucs--masonry .ucs__item:nth-child(4n + 4) .ucs-card__media {
+  aspect-ratio: 5 / 6;
+}
+
+/* --------------------------------------------------------------------------
+   Mode: editorial (reuses snippets/editorial-collection-grid.liquid)
+   -------------------------------------------------------------------------- */
+
+.ucs--editorial .editorial-collection__grid .ucs__item,
+.ucs--editorial .editorial-collection__grid .ucs-card {
+  height: 100%;
+}
+
+.ucs--editorial .editorial-collection__grid .ucs-card__media {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Mode: magazine (mixed sizes, text rows, rule lines)
+   -------------------------------------------------------------------------- */
+
+.ucs--magazine .ucs__magazine {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ucs-gap, 16px);
+  counter-reset: ucs-magazine;
+}
+
+.ucs--magazine .ucs__item {
+  counter-increment: ucs-magazine;
+  border-block-start: 1px solid rgb(128 128 128 / 0.35);
+  border-block-start: 1px solid rgb(from currentColor r g b / 0.25);
+  padding-block-start: calc(var(--ucs-gap, 16px) * 0.75);
+}
+
+.ucs--magazine .ucs-card__title::before {
+  content: counter(ucs-magazine, decimal-leading-zero) '  ';
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+  display: block;
+  margin-block-end: 4px;
+}
+
+@media screen and (min-width: 750px) {
+  .ucs--magazine .ucs__magazine {
+    grid-template-columns: repeat(12, 1fr);
+  }
+
+  .ucs--magazine .ucs__item:nth-child(6n + 1) {
+    grid-column: span 7;
+  }
+
+  .ucs--magazine .ucs__item:nth-child(6n + 2) {
+    grid-column: span 5;
+  }
+
+  .ucs--magazine .ucs__item:nth-child(6n + 3),
+  .ucs--magazine .ucs__item:nth-child(6n + 4),
+  .ucs--magazine .ucs__item:nth-child(6n + 5) {
+    grid-column: span 4;
+  }
+
+  .ucs--magazine .ucs__item:nth-child(6n + 6) {
+    grid-column: span 12;
+  }
+
+  .ucs--magazine .ucs__item:nth-child(6n + 6) .ucs-card__media {
+    aspect-ratio: 21 / 9;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mode: split (sticky text panel + scrolling cards)
+   -------------------------------------------------------------------------- */
+
+.ucs--split .ucs__split {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ucs-gap, 16px);
+}
+
+.ucs--split .ucs__split-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ucs-gap, 16px);
+}
+
+@media screen and (min-width: 750px) {
+  .ucs--split .ucs__split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(var(--ucs-gap, 16px) * 2);
+    align-items: start;
+  }
+
+  .ucs--split .ucs__split-panel {
+    position: sticky;
+    inset-block-start: 96px;
+  }
+
+  .ucs--split .ucs__split-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-block: 24px;
+  }
+
+  .ucs--split .ucs__split-heading {
+    margin: 0;
+    font-size: 2.25rem;
+    line-height: 1.15;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mode: storytelling (full-width alternating image/text rows)
+   -------------------------------------------------------------------------- */
+
+.ucs--storytelling .ucs__story {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ucs-gap, 16px) * 2);
+}
+
+.ucs--storytelling .ucs-card {
+  overflow: visible;
+}
+
+.ucs--storytelling .ucs-card__link {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ucs-gap, 16px);
+  align-items: center;
+}
+
+.ucs--storytelling .ucs-card__content {
+  position: static;
+  padding: 0;
+  color: inherit;
+}
+
+.ucs--storytelling .ucs-card__scrim {
+  display: none;
+}
+
+.ucs--storytelling .ucs-card__title {
+  font-size: 1.5rem;
+}
+
+@media screen and (min-width: 750px) {
+  .ucs--storytelling .ucs-card__link {
+    grid-template-columns: 3fr 2fr;
+    gap: calc(var(--ucs-gap, 16px) * 3);
+  }
+
+  /* Alternate media/text sides; grid order is writing-direction aware (RTL-safe). */
+  .ucs--storytelling .ucs__item:nth-child(even) .ucs-card__media {
+    order: 2;
+  }
+
+  .ucs--storytelling .ucs__item:nth-child(even) .ucs-card__content {
+    order: 1;
+  }
+
+  .ucs--storytelling .ucs-card__title {
+    font-size: 2rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mode: luxury (oversized imagery, serif/large type, generous spacing)
+   -------------------------------------------------------------------------- */
+
+.ucs--luxury .ucs__luxury {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ucs-gap, 16px) * 3);
+  max-inline-size: 1080px;
+  margin-inline: auto;
+}
+
+.ucs--luxury .ucs-card__media {
+  aspect-ratio: 16 / 10;
+}
+
+.ucs--luxury .ucs-card__title {
+  font-family: var(--font-heading--family, serif);
+  font-size: 1.75rem;
+  letter-spacing: 0.01em;
+}
+
+.ucs--luxury .ucs-card__content {
+  padding: 24px;
+}
+
+@media screen and (min-width: 750px) {
+  .ucs--luxury .ucs__luxury {
+    gap: calc(var(--ucs-gap, 16px) * 4);
+  }
+
+  .ucs--luxury .ucs-card__title {
+    font-size: 2.5rem;
+  }
+
+  .ucs--luxury .ucs-card__content {
+    padding: 40px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Hover effects (pointer devices only; mirrored on :focus-within for keyboard)
+   -------------------------------------------------------------------------- */
+
+.ucs--hover-zoom .ucs-card__image {
+  transition: transform var(--motion-normal) var(--ease-smooth);
+}
+
+.ucs--hover-lift .ucs-card {
+  transition: transform var(--motion-fast) var(--ease-sharp),
+    box-shadow var(--motion-fast) var(--ease-sharp);
+}
+
+.ucs--hover-reveal-text .ucs-card__cta {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--motion-fast) var(--ease-sharp),
+    transform var(--motion-fast) var(--ease-sharp);
+}
+
+.ucs--hover-glass .ucs-card__content-inner {
+  transition: background-color var(--motion-fast) var(--ease-sharp);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: -12px -16px;
+  margin-inline: -16px;
+  border: 1px solid transparent;
+}
+
+@media (hover: hover) {
+  .ucs--hover-zoom .ucs-card:hover .ucs-card__image,
+  .ucs--hover-zoom .ucs-card:focus-within .ucs-card__image {
+    transform: scale(1.04);
+  }
+
+  .ucs--hover-lift .ucs-card:hover,
+  .ucs--hover-lift .ucs-card:focus-within {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgb(0 0 0 / 0.16);
+  }
+
+  .ucs--hover-reveal-text .ucs-card:hover .ucs-card__cta,
+  .ucs--hover-reveal-text .ucs-card:focus-within .ucs-card__cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Glass recipe per conventions brief §2; only over imagery, opaque fallback below. */
+  .ucs--hover-glass .ucs-card:hover .ucs-card__content-inner,
+  .ucs--hover-glass .ucs-card:focus-within .ucs-card__content-inner {
+    background: rgb(255 255 255 / 0.18);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+    border-color: rgb(255 255 255 / 0.35);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.08);
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .ucs--hover-glass .ucs-card:hover .ucs-card__content-inner,
+    .ucs--hover-glass .ucs-card:focus-within .ucs-card__content-inner {
+      background: rgb(0 0 0 / 0.65);
+    }
+  }
+
+  .ucs-card__link:hover .ucs-card__cta-arrow {
+    transform: translateX(4px);
+  }
+
+  [dir='rtl'] .ucs-card__link:hover .ucs-card__cta-arrow {
+    transform: scaleX(-1) translateX(4px);
+  }
+}
+
+/* Keyboard users always get the reveal-text affordance. */
+.ucs--hover-reveal-text .ucs-card:focus-within .ucs-card__cta {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   Reveal-on-scroll
+   Hidden state only applies once JS has initialized (.ucs-js) so a JS
+   failure never leaves content invisible. Fires once per element.
+   -------------------------------------------------------------------------- */
+
+@media screen and (min-width: 750px) {
+  .ucs--reveal.ucs-js [data-ucs-reveal]:not(.is-revealed) {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@media screen and (max-width: 749px) {
+  .ucs--reveal.ucs--reveal-mobile.ucs-js [data-ucs-reveal]:not(.is-revealed) {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.ucs.ucs-js [data-ucs-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--motion-slow) var(--ease-smooth),
+    transform var(--motion-slow) var(--ease-smooth);
+  /* Stagger capped at 6 items per the motion brief. */
+  transition-delay: calc(min(var(--ucs-i, 0), 6) * 70ms);
+}
+
+/* --------------------------------------------------------------------------
+   Touch targets: mobile carousel arrows >= 44px
+   -------------------------------------------------------------------------- */
+
+@media screen and (max-width: 749px) {
+  .ucs__carousel slideshow-arrows button {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   prefers-reduced-motion: kill transforms and motion; opacity <= 200ms only.
+   Overrides everything above (the only sanctioned !important usage).
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ucs *,
+  .ucs *::before,
+  .ucs *::after {
+    transform: none !important;
+    transition-property: opacity !important;
+    transition-duration: 200ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+
+  .ucs [data-ucs-reveal] {
+    opacity: 1 !important;
+  }
+
+  .ucs--hover-reveal-text .ucs-card__cta {
+    opacity: 1 !important;
+  }
+
+  /* scaleX progress is meaningless without transforms; hide it. */
+  .ucs__progress {
+    display: none;
+  }
+
+  /* Keep the RTL arrow glyph mirrored even under the global transform kill. */
+  [dir='rtl'] .ucs .ucs-card__cta-arrow {
+    transform: scaleX(-1) !important;
+  }
+}

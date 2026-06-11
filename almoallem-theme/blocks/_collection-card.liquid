@@ -1,0 +1,386 @@
+
+
+{% assign collection = closest.collection %}
+
+{% capture card_image %}
+  {% content_for 'block',
+    type: '_collection-card-image',
+    id: 'collection-card-image',
+    closest.collection: collection,
+    parent_block_id: block.id %}
+{% endcapture %}
+
+{% capture children %}
+  {% content_for 'blocks', closest.collection: collection %}
+{% endcapture %}
+
+{% render 'collection-card',
+  card_image: card_image,
+  children: children,
+  block: block,
+  collection: collection,
+  section: section
+%}
+
+{% schema %}
+{
+  "name": "t:names.collection_card",
+  "blocks": [
+    {
+      "type": "text"
+    },
+    {
+      "type": "spacer"
+    },
+    {
+      "type": "button"
+    },
+    {
+      "type": "group"
+    },
+    {
+      "type": "collection-title"
+    }
+  ],
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:content.resource_reference_collection_card"
+    },
+    {
+      "type": "header",
+      "content": "t:content.text"
+    },
+    {
+      "type": "select",
+      "id": "placement",
+      "label": "t:settings.placement",
+      "options": [
+        {
+          "value": "on_image",
+          "label": "t:options.on_image"
+        },
+        {
+          "value": "below_image",
+          "label": "t:options.below_image"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "horizontal_alignment",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.right"
+        }
+      ],
+      "default": "flex-start"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment",
+      "label": "t:settings.position",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.top"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.bottom"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ block.settings.placement == \"on_image\" }}"
+    },
+    {
+      "type": "range",
+      "id": "collection_card_gap",
+      "label": "t:settings.vertical_gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "inherit_color_scheme",
+      "label": "t:settings.inherit_color_scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1",
+      "visible_if": "{{ block.settings.inherit_color_scheme == false }}"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.borders",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "unit": "px",
+      "label": "t:settings.border_width",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:settings.border_opacity",
+      "default": 100,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+    ,
+    {
+      "type": "header",
+      "content": "Text Style"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_text_color",
+      "label": "Enable custom text color",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#ffffff",
+      "visible_if": "{{ block.settings.enable_text_color }}"
+    },
+    {
+      "type": "header",
+      "content": "Text Background"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_text_bg",
+      "label": "Enable text background",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "text_bg_color",
+      "label": "Background color",
+      "default": "#000000",
+      "visible_if": "{{ block.settings.enable_text_bg }}"
+    },
+    {
+      "type": "range",
+      "id": "text_bg_opacity",
+      "label": "Opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50,
+      "visible_if": "{{ block.settings.enable_text_bg }}"
+    },
+    {
+      "type": "range",
+      "id": "text_bg_blur",
+      "label": "Blur (glassmorphism)",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.enable_text_bg }}"
+    },
+    {
+      "type": "range",
+      "id": "text_bg_padding",
+      "label": "Padding",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 12,
+      "visible_if": "{{ block.settings.enable_text_bg }}"
+    },
+    {
+      "type": "range",
+      "id": "text_bg_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "default": 8,
+      "visible_if": "{{ block.settings.enable_text_bg }}"
+    },
+    {
+      "type": "header",
+      "content": "Action Button"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_button",
+      "label": "Show button",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Label",
+      "default": "تسوق الآن",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Link (defaults to collection)",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "Style",
+      "options": [
+        { "value": "solid", "label": "Solid" },
+        { "value": "outline", "label": "Outline" },
+        { "value": "ghost", "label": "Ghost" }
+      ],
+      "default": "solid",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "select",
+      "id": "button_hover_effect",
+      "label": "Hover effect",
+      "options": [
+        { "value": "lift", "label": "Lift & glow" },
+        { "value": "fill", "label": "Fill sweep" },
+        { "value": "slide", "label": "Slide reveal" }
+      ],
+      "default": "lift",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "color",
+      "id": "button_bg",
+      "label": "Button color",
+      "default": "#c0392b",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#ffffff",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_bg",
+      "label": "Hover color",
+      "default": "#a02d23",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_text",
+      "label": "Hover text color",
+      "default": "#ffffff",
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "range",
+      "id": "button_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 5,
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 22,
+      "step": 1,
+      "unit": "px",
+      "default": 14,
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "range",
+      "id": "button_padding_v",
+      "label": "Vertical padding",
+      "min": 4,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "default": 10,
+      "visible_if": "{{ block.settings.show_button }}"
+    },
+    {
+      "type": "range",
+      "id": "button_padding_h",
+      "label": "Horizontal padding",
+      "min": 8,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 24,
+      "visible_if": "{{ block.settings.show_button }}"
+    }
+  ]
+}
+{% endschema %}

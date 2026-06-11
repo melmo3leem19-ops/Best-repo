@@ -1,0 +1,160 @@
+{%- doc -%}
+  Renders one viewport (desktop or mobile) of the Universal Collection Showcase
+  in one of nine display modes. All modes share the same card markup
+  (snippets/showcase-collection-card.liquid); this snippet only provides the
+  structural wrapper per mode. The carousel mode is built on the theme's
+  battle-tested slideshow engine (assets/slideshow.js) instead of a new engine.
+
+  @param {string} layout - One of: carousel, grid, bento, masonry, editorial, magazine, split, storytelling, luxury
+  @param {object} items - Array of pre-rendered card HTML strings
+  @param {number} item_count - Number of items
+  @param {object} settings - The section settings object
+  @param {string} ref - Unique slideshow ref for this viewport (carousel mode)
+  @param {boolean} [is_mobile] - True when rendering the mobile viewport
+
+  @example
+  {% render 'showcase-layout', layout: 'grid', items: items, item_count: items.size, settings: section.settings, ref: 'ucsDesktop' %}
+{%- enddoc -%}
+
+{%- liquid
+  assign joined_items = items | join: ''
+-%}
+
+{%- case layout -%}
+  {%- when 'carousel' -%}
+    {%- liquid
+      # Reuse the resource-list carousel pattern: slideshow engine + resource-list sizing CSS.
+      if settings.section_width == 'page-width'
+        assign slideshow_gutters = 'start end'
+        assign gutter_style = '--gutter-slide-width: var(--util-page-margin-offset);'
+      else
+        assign slideshow_gutters = null
+        assign gutter_style = '--gutter-slide-width: 0px;'
+      endif
+
+      assign show_arrows = false
+      assign controls_style = 'none'
+      case settings.navigation_style
+        when 'arrows'
+          assign show_arrows = true
+        when 'dots'
+          assign controls_style = 'dots'
+        when 'arrows_dots'
+          assign show_arrows = true
+          assign controls_style = 'dots'
+        when 'counter'
+          assign show_arrows = true
+          assign controls_style = 'counter'
+        when 'progress'
+          assign show_arrows = true
+      endcase
+
+      # Autoplay always needs an accessible pause control (slideshow-controls renders it).
+      if settings.autoplay and controls_style == 'none'
+        assign controls_style = 'dots'
+      endif
+
+      assign mobile_card_size = settings.mobile_card_width | append: 'cqw'
+    -%}
+
+    {%- capture slides -%}
+      {%- for item in items -%}
+        {% render 'slideshow-slide', index: forloop.index0, children: item, class: 'resource-list__slide ucs__slide' %}
+      {%- endfor -%}
+    {%- endcapture -%}
+
+    {%- capture carousel_controls -%}
+      {%- if controls_style != 'none' -%}
+        {% render 'slideshow-controls', style: controls_style, item_count: item_count, autoplay: settings.autoplay %}
+      {%- endif -%}
+    {%- endcapture -%}
+
+    <div
+      class="resource-list resource-list__carousel force-full-width ucs__carousel"
+      style="
+        --resource-list-column-gap-desktop: {{ settings.gap }}px;
+        --column-count: {{ settings.columns_desktop }};
+        --column-count-mobile: 1;
+        --mobile-card-size: {{ mobile_card_size }};
+      "
+    >
+      <div
+        class="resource-list__carousel"
+        style="{{ gutter_style }} --slide-width-max: 450px;"
+      >
+        {% render 'slideshow',
+          ref: ref,
+          class: 'ucs__slideshow',
+          slides: slides,
+          controls: carousel_controls,
+          show_arrows: show_arrows,
+          icon_style: 'chevron',
+          icon_shape: 'circle',
+          auto_hide_controls: false,
+          autoplay: settings.autoplay,
+          autoplay_speed: settings.autoplay_speed,
+          infinite: settings.infinite_loop,
+          initial_slide: 0,
+          slide_count: item_count,
+          slideshow_gutters: slideshow_gutters
+        %}
+      </div>
+      {%- if settings.navigation_style == 'progress' -%}
+        <div class="ucs__progress" aria-hidden="true">
+          <span class="ucs__progress-bar" data-ucs-progress></span>
+        </div>
+      {%- endif -%}
+    </div>
+
+  {%- when 'grid' -%}
+    <div class="ucs__grid">
+      {{ joined_items }}
+    </div>
+
+  {%- when 'bento' -%}
+    <div class="ucs__bento" style="--bento-gap: var(--ucs-gap);">
+      {% render 'bento-grid', items: items %}
+    </div>
+
+  {%- when 'masonry' -%}
+    <div class="ucs__masonry">
+      {{ joined_items }}
+    </div>
+
+  {%- when 'editorial' -%}
+    <div class="ucs__editorial">
+      {% render 'editorial-collection-grid', items: items %}
+    </div>
+
+  {%- when 'magazine' -%}
+    <div class="ucs__magazine">
+      {{ joined_items }}
+    </div>
+
+  {%- when 'split' -%}
+    <div class="ucs__split">
+      <div class="ucs__split-panel">
+        <div class="ucs__split-panel-inner">
+          {%- if settings.heading != blank -%}
+            <h2 class="ucs__split-heading">{{ settings.heading | escape }}</h2>
+          {%- endif -%}
+          {%- if settings.description != blank -%}
+            <div class="ucs__split-description rte">{{ settings.description }}</div>
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="ucs__split-cards">
+        {{ joined_items }}
+      </div>
+    </div>
+
+  {%- when 'storytelling' -%}
+    <div class="ucs__story">
+      {{ joined_items }}
+    </div>
+
+  {%- when 'luxury' -%}
+    <div class="ucs__luxury">
+      {{ joined_items }}
+    </div>
+{%- endcase -%}

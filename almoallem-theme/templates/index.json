@@ -731,10 +731,70 @@
         "padding-block-start": 0,
         "padding-block-end": 0
       }
+    },
+    "universal_collection_showcase": {
+      "type": "universal-collection-showcase",
+      "blocks": {
+        "ucs_col_1": {
+          "type": "collection",
+          "settings": {
+            "collection": "بهارات"
+          }
+        },
+        "ucs_col_2": {
+          "type": "collection",
+          "settings": {
+            "collection": "مكسرات"
+          }
+        },
+        "ucs_col_3": {
+          "type": "collection",
+          "settings": {
+            "collection": "دراجية"
+          }
+        }
+      },
+      "block_order": [
+        "ucs_col_1",
+        "ucs_col_2",
+        "ucs_col_3"
+      ],
+      "settings": {
+        "heading": "تسوق حسب المجموعة",
+        "heading_alignment": "start",
+        "collection_list": [],
+        "color_scheme": "scheme-1",
+        "section_width": "page-width",
+        "show_product_count": true,
+        "text_position": "overlay_bottom",
+        "show_scrim": true,
+        "scrim_strength": 55,
+        "card_radius": 8,
+        "layout_desktop": "carousel",
+        "columns_desktop": 4,
+        "gap": 16,
+        "card_aspect": "4-5",
+        "hover_effect": "zoom",
+        "enable_reveal": true,
+        "layout_mobile": "carousel",
+        "columns_mobile": "2",
+        "mobile_card_width": 70,
+        "card_aspect_mobile": "4-5",
+        "enable_swipe_mobile": true,
+        "enable_animation_mobile": false,
+        "navigation_style": "arrows_dots",
+        "autoplay": false,
+        "autoplay_speed": 5,
+        "infinite_loop": true,
+        "enable_virtual_rendering": true,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
     "blocks_EaCpaD",
+    "universal_collection_showcase",
     "dynamic_shipping_bar_XyN3WH",
     "product_list_MyCWBE",
     "collection_list_wkDrXf",

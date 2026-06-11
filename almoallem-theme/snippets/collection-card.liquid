@@ -1,0 +1,343 @@
+{%- doc -%}
+  This snippet is used to render a collection card.
+  To be used inside a block to inherit the block object settings.
+
+  @param {string} card_image - The image to display in the collection card
+  @param {string} children - The content to render inside the collection card
+  @param {object} collection - The collection to render the card for
+  @param {object} block - The block object
+  @param {object} section - The section object
+
+  @example
+  {% render 'collection-card',
+    card_image: card_image,
+    children: children,
+    block: block,
+    collection: collection,
+    section: section
+  %}
+{%- enddoc -%}
+
+{% style %}
+  {% if request.visual_preview_mode %}
+    .collection-card {
+      min-width: 250px;
+    }
+  {% endif %}
+{% endstyle %}
+
+{% liquid
+  assign onboarding = false
+  assign block_settings = block.settings
+
+  if collection == blank
+    assign onboarding = true
+  endif
+
+  # Precompute text color RGB for CSS custom property overrides
+  if block_settings.enable_text_color
+    assign cc_text_r = block_settings.text_color | color_extract: 'red'
+    assign cc_text_g = block_settings.text_color | color_extract: 'green'
+    assign cc_text_b = block_settings.text_color | color_extract: 'blue'
+  endif
+
+  # Precompute background alpha (0.0–1.0 from 0–100 integer)
+  if block_settings.enable_text_bg
+    assign cc_bg_alpha = block_settings.text_bg_opacity | divided_by: 100.0
+  endif
+
+  # Button href: explicit URL takes priority, falls back to collection URL
+  if block_settings.show_button
+    if block_settings.button_url != blank
+      assign button_href = block_settings.button_url
+    else
+      assign button_href = collection.url
+    endif
+  endif
+%}
+
+{%- comment -%} Dynamic styles: text wrapper colours injected via data-block-id scope {%- endcomment -%}
+{% if block_settings.enable_text_bg or block_settings.enable_text_color %}
+  {% style %}
+    [data-block-id="{{ block.id }}"] .collection-card__text-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: {{ block_settings.collection_card_gap }}px;
+      align-items: var(--horizontal-alignment, flex-start);
+      {% if block_settings.enable_text_color %}
+      --color-foreground: {{ cc_text_r }}, {{ cc_text_g }}, {{ cc_text_b }};
+      --color-foreground-rgb: {{ cc_text_r }}, {{ cc_text_g }}, {{ cc_text_b }};
+      color: {{ block_settings.text_color }};
+      {% endif %}
+      {% if block_settings.enable_text_bg %}
+      background-color: {{ block_settings.text_bg_color | color_modify: 'alpha', cc_bg_alpha }};
+      {% if block_settings.text_bg_blur > 0 %}
+      backdrop-filter: blur({{ block_settings.text_bg_blur }}px);
+      -webkit-backdrop-filter: blur({{ block_settings.text_bg_blur }}px);
+      {% endif %}
+      padding: {{ block_settings.text_bg_padding }}px;
+      border-radius: {{ block_settings.text_bg_radius }}px;
+      {% endif %}
+    }
+  {% endstyle %}
+{% endif %}
+
+<div
+  class="
+    collection-card
+    border-style
+    {% if block_settings.placement == 'on_image' %}collection-card--image-bg{% endif %}
+    {% if section.settings.layout_type == 'bento' %}collection-card--image-height-fixed{% endif %}
+    {% if section.settings.layout_type == 'editorial' %}collection-card--flexible-aspect-ratio{% endif %}
+    {% if block_settings.inherit_color_scheme == false %} color-{{ block_settings.color_scheme }}{% endif %}
+  "
+  data-block-id="{{ block.id }}"
+  {% if onboarding %}
+    data-placeholder="true"
+  {% endif %}
+  style="
+    {% render 'border-override', settings: block_settings %}
+    --horizontal-alignment: {{ block_settings.horizontal_alignment }};
+    --vertical-alignment: {{ block_settings.vertical_alignment }};
+    --background-overlay-color: {{ block_settings.overlay_color }};
+    --gap: {{ block_settings.collection_card_gap }}px;
+  "
+  {{- block.shopify_attributes -}}
+>
+  <a
+    class="collection-card__link"
+    {% unless onboarding %}
+      href="{{ collection.url }}"
+    {% endunless %}
+  >
+    <span class="visually-hidden">{{ collection.title }}</span>
+  </a>
+  <div class="collection-card__inner">
+    {{ card_image }}
+    <div class="collection-card__content layout-panel-flex--column">
+      <div class="collection-card__text-wrapper">
+        {{ children }}
+        {%- if block_settings.show_button and block_settings.button_label != blank -%}
+          <a
+            class="collection-card__cta collection-card__cta--{{ block_settings.button_hover_effect }} collection-card__cta--{{ block_settings.button_style }}"
+            href="{{ button_href }}"
+            style="
+              --cta-bg: {{ block_settings.button_bg }};
+              --cta-color: {{ block_settings.button_text_color }};
+              --cta-hover-bg: {{ block_settings.button_hover_bg }};
+              --cta-hover-color: {{ block_settings.button_hover_text }};
+              --cta-radius: {{ block_settings.button_radius }}px;
+              --cta-font-size: {{ block_settings.button_font_size }}px;
+              --cta-pad-v: {{ block_settings.button_padding_v }}px;
+              --cta-pad-h: {{ block_settings.button_padding_h }}px;
+            "
+          >
+            <span class="collection-card__cta-label">{{ block_settings.button_label }}</span>
+          </a>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .collection-card {
+    --fixed-card-height: var(--height-small);
+
+    flex: 1 1 var(--card-width-small);
+  }
+
+  .collection-card > svg {
+    height: 100%;
+    width: 100%;
+    aspect-ratio: var(--ratio);
+  }
+
+  .collection-card--image-bg .collection-card__inner {
+    height: 100%;
+  }
+
+  .collection-card__inner {
+    gap: var(--gap);
+
+    a,
+    button {
+      /* only allow interactive elements to be clickable separate from .collection-card__link */
+      pointer-events: auto;
+    }
+  }
+
+  /* allow all blocks to be selectable in editor preview */
+  .shopify-design-mode .collection-card__content * {
+    pointer-events: auto;
+  }
+
+  .collection-card__content {
+    max-width: 100%;
+    --flex-wrap: wrap;
+  }
+
+  /* Nested image block rules */
+
+  .collection-card.collection-card--image-bg {
+    aspect-ratio: var(--ratio);
+  }
+
+  .collection-card.collection-card--image-bg .collection-card__content {
+    padding: var(--padding-lg);
+  }
+
+  .collection-card--image-height-fixed {
+    height: 100%;
+  }
+
+  /* Bento layout rules */
+  .collection-card--image-height-fixed .collection-card__image {
+    height: var(--fixed-card-height);
+    width: 100%;
+  }
+
+  .collection-card--image-height-fixed.collection-card--image-bg {
+    height: var(--fixed-card-height);
+    aspect-ratio: unset;
+  }
+
+  .collection-card__image .image-block__image {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+  }
+
+  .collection-card--image-bg .collection-card__image {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+
+  .collection-card__image svg {
+    height: 100%;
+    width: 100%;
+  }
+
+  .resource-list:not(.hidden--desktop) .collection-card--flexible-aspect-ratio {
+    &.collection-card.collection-card--image-bg,
+    &.collection-card .placeholder-svg {
+      aspect-ratio: 99;
+    }
+  }
+
+  /* ── Text Wrapper ────────────────────────────────────────────── */
+  /* Default: invisible in layout so existing flex behaviour is unchanged */
+  .collection-card__text-wrapper {
+    display: contents;
+  }
+
+  /* ── Action Button ─────────────────────────────────────────────── */
+  .collection-card__cta {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--cta-pad-v, 10px) var(--cta-pad-h, 24px);
+    font-size: var(--cta-font-size, 14px);
+    font-family: var(--font-heading--family);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    border-radius: var(--cta-radius, 5px);
+    text-decoration: none;
+    overflow: hidden;
+    cursor: pointer;
+    pointer-events: auto;
+    background-color: var(--cta-bg, transparent);
+    color: var(--cta-color, currentColor);
+    border: 2px solid var(--cta-bg, transparent);
+    transition: color 0.3s ease, transform 0.25s ease, box-shadow 0.3s ease,
+      background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  /* Style variants */
+  .collection-card__cta--outline {
+    background-color: transparent;
+    color: var(--cta-bg);
+    border-color: var(--cta-bg);
+  }
+
+  .collection-card__cta--ghost {
+    background-color: transparent;
+    border-color: var(--cta-color);
+  }
+
+  /* Simple hover for lift (and as fallback for fill/slide) */
+  .collection-card__cta:not(.collection-card__cta--fill):not(.collection-card__cta--slide):hover {
+    background-color: var(--cta-hover-bg);
+    color: var(--cta-hover-color);
+    border-color: var(--cta-hover-bg);
+  }
+
+  /* Lift & glow */
+  .collection-card__cta--lift {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  .collection-card__cta--lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  /* Shared pseudo-element for fill + slide */
+  .collection-card__cta--fill::before,
+  .collection-card__cta--slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--cta-hover-bg);
+  }
+
+  /* Label above pseudo-element */
+  .collection-card__cta--fill .collection-card__cta-label,
+  .collection-card__cta--slide .collection-card__cta-label {
+    position: relative;
+    z-index: 1;
+    transition: color 0.35s ease;
+  }
+
+  .collection-card__cta--fill:hover .collection-card__cta-label,
+  .collection-card__cta--slide:hover .collection-card__cta-label {
+    color: var(--cta-hover-color);
+  }
+
+  /* Fill: horizontal sweep from leading edge */
+  .collection-card__cta--fill::before {
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html[dir='rtl'] .collection-card__cta--fill::before {
+    transform-origin: 100% 50%;
+  }
+
+  .collection-card__cta--fill:hover::before {
+    transform: scaleX(1);
+  }
+
+  /* Slide: vertical reveal from below */
+  .collection-card__cta--slide::before {
+    transform: translateY(105%);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .collection-card__cta--slide:hover::before {
+    transform: translateY(0);
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .collection-card__cta,
+    .collection-card__cta::before,
+    .collection-card__cta-label {
+      transition-duration: 0.01ms;
+    }
+  }
+{% endstylesheet %}

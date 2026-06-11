@@ -1,0 +1,559 @@
+{%- comment -%}
+  Universal Collection Showcase
+  Nine display modes sharing one card markup loop:
+  carousel (theme slideshow engine), grid, bento, masonry, editorial,
+  magazine, split, storytelling, luxury.
+  Card markup: snippets/showcase-collection-card.liquid
+  Mode wrappers: snippets/showcase-layout.liquid
+  Mode CSS: assets/collection-showcase.css
+  Reveal/progress JS: assets/collection-showcase.js
+{%- endcomment -%}
+
+{{ 'collection-showcase.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'collection-showcase.js' | asset_url }}" defer></script>
+
+{%- liquid
+  assign ss = section.settings
+
+  case ss.card_aspect
+    when 'adapt'
+      assign aspect_desktop = 'auto'
+    when '1-1'
+      assign aspect_desktop = '1 / 1'
+    when '4-3'
+      assign aspect_desktop = '4 / 3'
+    when '3-4'
+      assign aspect_desktop = '3 / 4'
+    when '4-5'
+      assign aspect_desktop = '4 / 5'
+    when '16-9'
+      assign aspect_desktop = '16 / 9'
+    else
+      assign aspect_desktop = '4 / 5'
+  endcase
+
+  case ss.card_aspect_mobile
+    when 'adapt'
+      assign aspect_mobile = 'auto'
+    when '1-1'
+      assign aspect_mobile = '1 / 1'
+    when '4-3'
+      assign aspect_mobile = '4 / 3'
+    when '3-4'
+      assign aspect_mobile = '3 / 4'
+    when '4-5'
+      assign aspect_mobile = '4 / 5'
+    when '16-9'
+      assign aspect_mobile = '16 / 9'
+    else
+      assign aspect_mobile = '4 / 5'
+  endcase
+
+  assign scrim_alpha = ss.scrim_strength | divided_by: 100.0
+
+  assign region_label = ss.heading
+  if region_label == blank
+    assign region_label = 'accessibility.collection_showcase' | t
+  endif
+
+  assign collection_block_count = 0
+  for block in section.blocks
+    if block.type == 'collection'
+      assign collection_block_count = collection_block_count | plus: 1
+    endif
+  endfor
+-%}
+
+{%- capture items_html -%}
+  {%- if collection_block_count > 0 -%}
+    {%- for block in section.blocks limit: 12 -%}
+      {%- if block.type == 'collection' -%}
+        {% render 'showcase-collection-card',
+          collection: block.settings.collection,
+          custom_image: block.settings.custom_image,
+          custom_title: block.settings.custom_title,
+          custom_text: block.settings.custom_text,
+          index: forloop.index0,
+          settings: ss,
+          shopify_attributes: block.shopify_attributes
+        %}
+        {%- unless forloop.last -%}<!--@ucs/split-->{%- endunless -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- elsif ss.collection_list != blank -%}
+    {%- for collection in ss.collection_list limit: 12 -%}
+      {% render 'showcase-collection-card',
+        collection: collection,
+        index: forloop.index0,
+        settings: ss
+      %}
+      {%- unless forloop.last -%}<!--@ucs/split-->{%- endunless -%}
+    {%- endfor -%}
+  {%- else -%}
+    {%- for i in (1..4) -%}
+      {% render 'showcase-collection-card', index: forloop.index0, settings: ss %}
+      {%- unless forloop.last -%}<!--@ucs/split-->{%- endunless -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- liquid
+  assign items = items_html | strip | split: '<!--@ucs/split-->'
+  assign item_count = items.size
+-%}
+
+<div class="section-background color-{{ ss.color_scheme }}"></div>
+<section
+  class="
+    ucs
+    section
+    section--{{ ss.section_width }}
+    color-{{ ss.color_scheme }}
+    spacing-style
+    ucs--text-{{ ss.text_position }}
+    ucs--hover-{{ ss.hover_effect }}
+    {% if ss.enable_virtual_rendering %} ucs--cv-auto{% endif %}
+    {% unless ss.enable_swipe_mobile %} ucs--no-swipe{% endunless %}
+    {% if ss.enable_reveal %} ucs--reveal{% endif %}
+    {% if ss.enable_animation_mobile %} ucs--reveal-mobile{% endif %}
+    {% if ss.layout_desktop == 'split' %} ucs--d-split{% endif %}
+    {% if ss.layout_mobile == 'split' %} ucs--m-split{% endif %}
+  "
+  style="
+    {% render 'spacing-style', settings: ss %}
+    --ucs-cols: {{ ss.columns_desktop }};
+    --ucs-cols-mobile: {{ ss.columns_mobile }};
+    --ucs-gap: {{ ss.gap }}px;
+    --ucs-aspect: {{ aspect_desktop }};
+    --ucs-aspect-mobile: {{ aspect_mobile }};
+    --ucs-radius: {{ ss.card_radius }}px;
+    --ucs-scrim-alpha: {{ scrim_alpha }};
+    --ucs-heading-align: {{ ss.heading_alignment }};
+  "
+  role="region"
+  aria-label="{{ region_label | escape }}"
+  data-ucs
+>
+  {%- if ss.heading != blank or ss.description != blank -%}
+    <div class="ucs__header">
+      {%- if ss.heading != blank -%}
+        <h2 class="ucs__heading">{{ ss.heading | escape }}</h2>
+      {%- endif -%}
+      {%- if ss.description != blank -%}
+        <div class="ucs__description rte">{{ ss.description }}</div>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- if ss.layout_desktop == ss.layout_mobile -%}
+    <div class="ucs__viewport ucs--{{ ss.layout_desktop }}">
+      {% render 'showcase-layout',
+        layout: ss.layout_desktop,
+        items: items,
+        item_count: item_count,
+        settings: ss,
+        ref: 'ucsShowcase'
+      %}
+    </div>
+  {%- else -%}
+    <div class="ucs__viewport ucs--{{ ss.layout_desktop }} hidden--mobile">
+      {% render 'showcase-layout',
+        layout: ss.layout_desktop,
+        items: items,
+        item_count: item_count,
+        settings: ss,
+        ref: 'ucsShowcaseDesktop'
+      %}
+    </div>
+    <div class="ucs__viewport ucs--{{ ss.layout_mobile }} hidden--desktop">
+      {% render 'showcase-layout',
+        layout: ss.layout_mobile,
+        items: items,
+        item_count: item_count,
+        settings: ss,
+        ref: 'ucsShowcaseMobile',
+        is_mobile: true
+      %}
+    </div>
+  {%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Collection Showcase",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Shop by collection"
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "label": "Heading alignment",
+      "options": [
+        { "value": "start", "label": "Start" },
+        { "value": "center", "label": "Center" },
+        { "value": "end", "label": "End" }
+      ],
+      "default": "start"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description"
+    },
+    {
+      "type": "collection_list",
+      "id": "collection_list",
+      "label": "Collections (fallback)",
+      "limit": 12,
+      "info": "Used when no collection blocks are added. Blocks take priority and control order."
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        { "value": "page-width", "label": "Page" },
+        { "value": "full-width", "label": "Full" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "header",
+      "content": "Cards"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_count",
+      "label": "Show product count",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "text_position",
+      "label": "Text position",
+      "options": [
+        { "value": "overlay_bottom", "label": "Overlay, bottom" },
+        { "value": "overlay_center", "label": "Overlay, center" },
+        { "value": "below", "label": "Below image" }
+      ],
+      "default": "overlay_bottom"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_scrim",
+      "label": "Gradient scrim behind text",
+      "info": "Keeps overlaid text readable on busy imagery.",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "scrim_strength",
+      "label": "Scrim strength",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 55,
+      "visible_if": "{{ section.settings.show_scrim }}"
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Desktop layout"
+    },
+    {
+      "type": "select",
+      "id": "layout_desktop",
+      "label": "Desktop layout",
+      "options": [
+        { "value": "carousel", "label": "Carousel" },
+        { "value": "grid", "label": "Grid" },
+        { "value": "bento", "label": "Bento" },
+        { "value": "masonry", "label": "Masonry" },
+        { "value": "editorial", "label": "Editorial" },
+        { "value": "magazine", "label": "Magazine" },
+        { "value": "split", "label": "Split" },
+        { "value": "storytelling", "label": "Storytelling" },
+        { "value": "luxury", "label": "Luxury" }
+      ],
+      "default": "carousel"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Columns",
+      "min": 2,
+      "max": 6,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "card_aspect",
+      "label": "Card aspect ratio",
+      "options": [
+        { "value": "adapt", "label": "Adapt to image" },
+        { "value": "1-1", "label": "Square (1:1)" },
+        { "value": "4-3", "label": "Landscape (4:3)" },
+        { "value": "3-4", "label": "Portrait (3:4)" },
+        { "value": "4-5", "label": "Portrait (4:5)" },
+        { "value": "16-9", "label": "Wide (16:9)" }
+      ],
+      "default": "4-5"
+    },
+    {
+      "type": "select",
+      "id": "hover_effect",
+      "label": "Hover effect",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "zoom", "label": "Zoom" },
+        { "value": "lift", "label": "Lift" },
+        { "value": "reveal-text", "label": "Reveal text" },
+        { "value": "glass", "label": "Glass overlay" }
+      ],
+      "default": "zoom"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_reveal",
+      "label": "Reveal cards on scroll",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Mobile layout"
+    },
+    {
+      "type": "select",
+      "id": "layout_mobile",
+      "label": "Mobile layout",
+      "options": [
+        { "value": "carousel", "label": "Carousel" },
+        { "value": "grid", "label": "Grid" },
+        { "value": "bento", "label": "Bento" },
+        { "value": "masonry", "label": "Masonry" },
+        { "value": "editorial", "label": "Editorial" },
+        { "value": "magazine", "label": "Magazine" },
+        { "value": "split", "label": "Split" },
+        { "value": "storytelling", "label": "Storytelling" },
+        { "value": "luxury", "label": "Luxury" }
+      ],
+      "default": "carousel"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Mobile columns",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "range",
+      "id": "mobile_card_width",
+      "label": "Mobile card width (carousel peek)",
+      "min": 40,
+      "max": 90,
+      "step": 5,
+      "unit": "%",
+      "default": 70,
+      "visible_if": "{{ section.settings.layout_mobile == 'carousel' }}"
+    },
+    {
+      "type": "select",
+      "id": "card_aspect_mobile",
+      "label": "Mobile card aspect ratio",
+      "options": [
+        { "value": "adapt", "label": "Adapt to image" },
+        { "value": "1-1", "label": "Square (1:1)" },
+        { "value": "4-3", "label": "Landscape (4:3)" },
+        { "value": "3-4", "label": "Portrait (3:4)" },
+        { "value": "4-5", "label": "Portrait (4:5)" },
+        { "value": "16-9", "label": "Wide (16:9)" }
+      ],
+      "default": "4-5"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_swipe_mobile",
+      "label": "Enable swipe on mobile carousel",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_animation_mobile",
+      "label": "Enable reveal animation on mobile",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Carousel"
+    },
+    {
+      "type": "select",
+      "id": "navigation_style",
+      "label": "Navigation style",
+      "options": [
+        { "value": "arrows", "label": "Arrows" },
+        { "value": "dots", "label": "Dots" },
+        { "value": "arrows_dots", "label": "Arrows and dots" },
+        { "value": "counter", "label": "Counter" },
+        { "value": "progress", "label": "Progress bar" }
+      ],
+      "default": "arrows_dots",
+      "visible_if": "{{ section.settings.layout_desktop == 'carousel' or section.settings.layout_mobile == 'carousel' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "Autoplay",
+      "info": "A pause button is always shown. Autoplay stops for visitors who prefer reduced motion.",
+      "default": false,
+      "visible_if": "{{ section.settings.layout_desktop == 'carousel' or section.settings.layout_mobile == 'carousel' }}"
+    },
+    {
+      "type": "range",
+      "id": "autoplay_speed",
+      "label": "Autoplay speed",
+      "min": 3,
+      "max": 9,
+      "step": 1,
+      "unit": "s",
+      "default": 5,
+      "visible_if": "{{ section.settings.autoplay }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "infinite_loop",
+      "label": "Infinite loop",
+      "default": true,
+      "visible_if": "{{ section.settings.layout_desktop == 'carousel' or section.settings.layout_mobile == 'carousel' }}"
+    },
+    {
+      "type": "header",
+      "content": "Performance"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_virtual_rendering",
+      "label": "Skip offscreen rendering",
+      "info": "Uses CSS content-visibility to defer painting this section until it nears the viewport.",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "Collection",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "Custom image",
+          "info": "Overrides the collection image."
+        },
+        {
+          "type": "text",
+          "id": "custom_title",
+          "label": "Custom title",
+          "info": "Overrides the collection title."
+        },
+        {
+          "type": "text",
+          "id": "custom_text",
+          "label": "Supporting text"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "Collection Showcase",
+      "category": "Collections",
+      "settings": {
+        "heading": "Shop by collection",
+        "layout_desktop": "carousel",
+        "layout_mobile": "carousel",
+        "columns_desktop": 4,
+        "gap": 16,
+        "card_aspect": "4-5",
+        "hover_effect": "zoom",
+        "navigation_style": "arrows_dots",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      },
+      "blocks": [
+        { "type": "collection" },
+        { "type": "collection" },
+        { "type": "collection" },
+        { "type": "collection" }
+      ]
+    }
+  ]
+}
+{% endschema %}

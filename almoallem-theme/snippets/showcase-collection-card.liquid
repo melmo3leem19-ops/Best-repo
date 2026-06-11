@@ -1,0 +1,112 @@
+{%- doc -%}
+  Renders a single collection card for the Universal Collection Showcase section.
+  Mode-agnostic markup: layout/hover/overlay variations are driven entirely by
+  parent classes and CSS custom properties in assets/collection-showcase.css.
+
+  @param {object} [collection] - The collection to render (blank renders an onboarding placeholder)
+  @param {object} [custom_image] - Optional image override from the block settings
+  @param {string} [custom_title] - Optional title override from the block settings
+  @param {string} [custom_text] - Optional supporting text from the block settings
+  @param {number} index - Zero-based index of the card in the list
+  @param {object} settings - The section settings object
+  @param {string} [shopify_attributes] - block.shopify_attributes passthrough for the editor
+
+  @example
+  {% render 'showcase-collection-card', collection: collection, index: 0, settings: section.settings %}
+{%- enddoc -%}
+
+{%- liquid
+  assign onboarding = false
+  if collection == blank
+    assign onboarding = true
+  endif
+
+  assign card_title = custom_title
+  if card_title == blank
+    assign card_title = collection.title
+  endif
+  if card_title == blank
+    assign card_title = 'placeholders.collection_title' | t
+  endif
+
+  assign card_text = custom_text
+  if card_text == blank and settings.layout_desktop == 'storytelling' or settings.layout_mobile == 'storytelling'
+    assign card_text = collection.description | strip_html | truncate: 160
+  endif
+
+  assign card_image = custom_image
+  if card_image == blank
+    assign card_image = collection.featured_image
+  endif
+
+  if index < 2
+    assign image_loading = 'eager'
+  else
+    assign image_loading = 'lazy'
+  endif
+
+  assign placeholder_index = index | modulo: 6 | plus: 1
+  assign placeholder_name = 'collection-' | append: placeholder_index
+
+  assign sizes_attr = '(min-width: 990px) calc(100vw / ' | append: settings.columns_desktop | append: '), (min-width: 750px) 50vw, ' | append: settings.mobile_card_width | append: 'vw'
+
+  assign stagger_index = index
+  if stagger_index > 6
+    assign stagger_index = 6
+  endif
+-%}
+
+<div class="ucs__item" style="--ucs-i: {{ stagger_index }};">
+  <article
+    class="ucs-card{% if onboarding %} ucs-card--placeholder{% endif %}"
+    data-ucs-reveal
+    {{ shopify_attributes }}
+  >
+    <a
+      class="ucs-card__link"
+      {% unless onboarding %}
+        href="{{ collection.url }}"
+      {% else %}
+        role="link"
+        aria-disabled="true"
+      {% endunless %}
+    >
+      <div class="ucs-card__media">
+        {%- if card_image != blank -%}
+          {{
+            card_image
+            | image_url: width: 1500
+            | image_tag:
+              widths: '300, 450, 600, 750, 900, 1200, 1500',
+              sizes: sizes_attr,
+              loading: image_loading,
+              class: 'ucs-card__image',
+              alt: card_title
+          }}
+        {%- else -%}
+          {{ placeholder_name | placeholder_svg_tag: 'ucs-card__image ucs-card__image--placeholder' }}
+        {%- endif -%}
+        {%- if settings.show_scrim -%}
+          <span class="ucs-card__scrim" aria-hidden="true"></span>
+        {%- endif -%}
+      </div>
+      <div class="ucs-card__content">
+        <div class="ucs-card__content-inner">
+          <h3 class="ucs-card__title">{{ card_title | escape }}</h3>
+          {%- if settings.show_product_count and onboarding == false -%}
+            <p class="ucs-card__count">
+              {{- 'content.ucs_product_count' | t: count: collection.products_count -}}
+            </p>
+          {%- endif -%}
+          {%- if card_text != blank -%}
+            <p class="ucs-card__text">{{ card_text | escape }}</p>
+          {%- endif -%}
+          <span class="ucs-card__cta">
+            <span class="ucs-card__cta-label">{{ 'actions.view_collection' | t }}</span>
+            <span class="ucs-card__cta-arrow" aria-hidden="true">&rarr;</span>
+          </span>
+        </div>
+      </div>
+    </a>
+  </article>
+</div>

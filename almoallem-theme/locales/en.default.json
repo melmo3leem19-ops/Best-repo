@@ -9,6 +9,7 @@
  */
 {
   "accessibility": {
+    "collection_showcase": "Collection showcase",
     "account": "Account",
     "cart": "Cart",
     "cart_count": "Total items in cart",
@@ -59,6 +60,7 @@
     "view_pricing_info": "View pricing information"
   },
   "actions": {
+    "view_collection": "View collection",
     // Quick add button on product cards, shortened version of add to cart
     "add": "Add",
     "add_to_cart": "Add to cart",
@@ -151,6 +153,10 @@
     }
   },
   "content": {
+    "ucs_product_count": {
+      "one": "{{ count }} product",
+      "other": "{{ count }} products"
+    },
     "cancel": "Cancel",
     "discount": "Discount",
     "account_title": "Account",
