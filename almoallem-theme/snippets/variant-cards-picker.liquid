@@ -1,0 +1,205 @@
+{%- doc -%}
+  Plantel-style variant card picker.
+  Badges driven by variant metafields: custom.best_seller / custom.best_value (boolean).
+
+  Single-option products render the original flat list of cards (unchanged).
+  Multi-option products render one labeled group (fieldset + visible legend) per option:
+  the first option keeps the card style, options 2+ render as compact pills by default.
+  Both group styles are configurable from the block settings.
+
+  @param {object} product_resource - The product object.
+  @param {string} [first_option_style] - 'cards' (default) or 'pills' for the first option group.
+  @param {string} [other_options_style] - 'cards' or 'pills' (default) for option groups 2+.
+{%- enddoc -%}
+
+{%- liquid
+  assign seller_label_txt = best_seller_label | default: 'أفضل مبيعاً'
+  assign value_label_txt  = best_value_label  | default: 'القيمة الأفضل'
+  assign s_bg    = best_seller_bg    | default: '#FF8C00'
+  assign s_fg    = best_seller_color | default: '#FFFFFF'
+  assign v_bg    = best_value_bg     | default: '#1A7F5A'
+  assign v_fg    = best_value_color  | default: '#FFFFFF'
+  assign radius  = card_radius     | default: 12
+  assign padding = card_padding    | default: 14
+  assign gap     = card_gap        | default: 14
+  assign bg      = card_bg         | default: '#FFFFFF'
+  assign border  = card_border     | default: '#E5E1D8'
+  assign sel_bg  = selected_bg     | default: '#FFF5EE'
+  assign sel_bor = selected_border | default: '#C26433'
+  assign first_style = first_option_style  | default: 'cards'
+  assign rest_style  = other_options_style | default: 'pills'
+  if show_compare_at == nil
+    assign show_compare_at = true
+  endif
+  if show_discount_badge == nil
+    assign show_discount_badge = true
+  endif
+  if show_check == nil
+    assign show_check = true
+  endif
+-%}
+
+{% unless product_resource.has_only_default_variant %}
+  {%- assign option_count = product_resource.options_with_values.size -%}
+  <variant-picker
+    class="variant-picker variant-cards-picker"
+    style="--vc-radius:{{ radius }}px;--vc-pad:{{ padding }}px;--vc-gap:{{ gap }}px;--vc-bg:{{ bg }};--vc-border:{{ border }};--vc-sel-bg:{{ sel_bg }};--vc-sel-bor:{{ sel_bor }};--vc-seller-bg:{{ s_bg }};--vc-seller-fg:{{ s_fg }};--vc-value-bg:{{ v_bg }};--vc-value-fg:{{ v_fg }};"
+    data-section-id="{{ section.id }}"
+    data-product-id="{{ product_resource.id }}"
+    data-block-id="{{ block.id }}"
+    data-product-url="{{ product_resource.url }}"
+    ref="mainVariantPicker"
+    {% if product.id == product_resource.id %}data-template-product-match="true"{% endif %}
+    {{ block.shopify_attributes }}
+    {% if request.visual_preview_mode %}data-shopify-visual-preview{% endif %}
+  >
+    <form class="variant-picker__form">
+      {%- for product_option in product_resource.options_with_values -%}
+        {%- liquid
+          assign fieldset_index = forloop.index0
+          if forloop.first
+            assign group_style = first_style
+          else
+            assign group_style = rest_style
+          endif
+        -%}
+        <fieldset class="vc-fieldset{% if group_style == 'pills' %} vc-fieldset--pills{% endif %}" data-fieldset-index="{{ fieldset_index }}" ref="fieldsets[]">
+          {%- if option_count > 1 -%}
+            <legend class="vc-fieldset__legend">{{ product_option.name | escape }}</legend>
+          {%- else -%}
+            <legend class="visually-hidden">{{ product_option.name | escape }}</legend>
+          {%- endif -%}
+          {%- for product_option_value in product_option.values -%}
+            {%- liquid
+              assign variant      = product_option_value.variant
+              assign value_title  = product_option_value | escape
+              assign has_compare  = false
+              assign discount_pct = 0
+              if variant.compare_at_price > variant.price
+                assign has_compare  = true
+                assign discount_pct = variant.compare_at_price | minus: variant.price | times: 100.0 | divided_by: variant.compare_at_price | round
+              endif
+              assign show_compare_row = false
+              if has_compare and show_compare_at
+                assign show_compare_row = true
+              endif
+              assign card_badge_text = ''
+              assign card_badge_mod  = ''
+              if variant.metafields.custom.best_seller == true
+                assign card_badge_text = seller_label_txt
+                assign card_badge_mod  = 'vc-badge--seller'
+              elsif variant.metafields.custom.best_value == true
+                assign card_badge_text = value_label_txt
+                assign card_badge_mod  = 'vc-badge--value'
+              endif
+            -%}
+            {%- capture option_input -%}
+              <input
+                type="radio"
+                class="vc__radio"
+                name="{{ product_option.name | escape }}-{{ block.id }}-{{ product_resource.id }}"
+                value="{{ product_option_value | escape }}"
+                aria-label="{{ product_option_value.name }}"
+                {% if product_option_value.available == false %}aria-disabled="true"{% endif %}
+                data-previous-checked="false"
+                data-fieldset-index="{{ fieldset_index }}"
+                data-input-index="{{ forloop.index0 }}"
+                data-input-id="{{ product_option.position }}-{{ forloop.index0 }}"
+                data-option-value-id="{{ product_option_value.id }}"
+                data-option-available="{{ product_option_value.available }}"
+                data-connected-product-url="{{ product_option_value.product_url }}"
+                {% if product_option_value.variant.id %}data-variant-id="{{ product_option_value.variant.id }}"{% endif %}
+                {% if product_option_value.selected %}data-current-checked="true" checked{% else %}data-current-checked="false"{% endif %}
+              >
+            {%- endcapture -%}
+            {%- if group_style == 'pills' -%}
+              <label class="vc-pill{% unless product_option_value.available %} vc-pill--unavailable{% endunless %}">
+                {{ option_input }}
+                <span class="vc-pill__text">{{ value_title }}</span>
+              </label>
+            {%- else -%}
+              <label class="vc{% unless product_option_value.available %} vc--unavailable{% endunless %}{% unless show_compare_row %} vc--simple{% endunless %}">
+                {{ option_input }}
+                {%- if card_badge_text != '' -%}
+                  <span class="vc__badge {{ card_badge_mod }}">{{ card_badge_text }}</span>
+                {%- endif -%}
+                <div class="vc__row">
+                  <div class="vc__info">
+                    <span class="vc__title">{{ value_title }}</span>
+                    <div class="vc__pricing">
+                      {%- if show_compare_row -%}
+                        <span class="vc__price-group" role="group">
+                          <span class="visually-hidden">{{ 'content.price_sale' | t }}&nbsp;</span>
+                          <span class="vc__price">{{ variant.price | money }}</span>
+                        </span>
+                        <span class="vc__price-group" role="group">
+                          <span class="visually-hidden">{{ 'content.price_regular' | t }}&nbsp;</span>
+                          <s class="vc__compare">{{ variant.compare_at_price | money }}</s>
+                        </span>
+                        {%- if show_discount_badge -%}
+                          <span class="vc__disc">
+                            <span class="visually-hidden">{{ 'content.discount' | t }}&nbsp;</span>
+                            <bdi dir="ltr">-{{ discount_pct }}%</bdi>
+                          </span>
+                        {%- endif -%}
+                      {%- else -%}
+                        <span class="vc__price">{{ variant.price | money }}</span>
+                      {%- endif -%}
+                    </div>
+                  </div>
+                  {%- if show_check -%}
+                    <span class="vc__check" aria-hidden="true">
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                        <path d="M1.5 5.5L4.5 8.5L9.5 2.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                  {%- endif -%}
+                </div>
+              </label>
+            {%- endif -%}
+          {%- endfor -%}
+        </fieldset>
+      {%- endfor -%}
+      <script type="application/json">
+        {{ product_resource.selected_or_first_available_variant | json }}
+      </script>
+    </form>
+  </variant-picker>
+{% endunless %}
+
+{% stylesheet %}
+  .variant-cards-picker { width: 100%; display: block; }
+  .vc-fieldset { display: flex; flex-direction: column; gap: var(--vc-gap, 14px); border: 0; padding: 0; margin: 0; width: 100%; }
+  .vc-fieldset + .vc-fieldset { margin-block-start: 20px; }
+  .vc-fieldset__legend { padding: 0; margin: 0; margin-block-end: 10px; font-size: 0.875rem; font-weight: 700; line-height: 1.3; color: var(--color-foreground); }
+  .vc-fieldset--pills { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+  .vc { position: relative; display: block; width: 100%; cursor: pointer; border-radius: var(--vc-radius, 12px); border: 1.5px solid var(--vc-border, #E5E1D8); background: var(--vc-bg, #FFFFFF); transition: border-color 0.18s ease, background 0.18s ease; -webkit-tap-highlight-color: transparent; }
+  .vc:hover:not(.vc--unavailable):not(:has(.vc__radio:checked)) { border-color: var(--vc-sel-bor, #C26433); }
+  .vc:has(.vc__radio:checked) { border: 2px solid var(--vc-sel-bor, #C26433); background: var(--vc-sel-bg, #FFF5EE); }
+  .vc--unavailable { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .vc:has(.vc__radio:focus-visible) { outline: 2px solid var(--vc-sel-bor, #C26433); outline-offset: 3px; }
+  .vc__radio { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+  .vc__badge { position: absolute; top: 0; inset-inline-start: 16px; transform: translateY(-50%); z-index: 2; display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 100px; font-size: 0.6875rem; font-weight: 700; line-height: 1.4; white-space: nowrap; letter-spacing: 0.01em; pointer-events: none; }
+  .vc-badge--seller { background: var(--vc-seller-bg, #FF8C00); color: var(--vc-seller-fg, #FFFFFF); }
+  .vc-badge--value { background: var(--vc-value-bg, #1A7F5A); color: var(--vc-value-fg, #FFFFFF); }
+  .vc__row { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: var(--vc-pad, 14px); width: 100%; }
+  .vc__info { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; flex: 1; min-width: 0; text-align: right; }
+  .vc--simple .vc__info { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px; }
+  .vc__title { font-size: 1rem; font-weight: 600; color: var(--color-foreground); line-height: 1.3; }
+  .vc__pricing { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+  .vc__price-group { display: inline-flex; align-items: baseline; }
+  .vc__compare { font-size: 0.8125rem; color: color-mix(in srgb, var(--color-foreground) 50%, transparent); text-decoration: line-through; font-weight: 400; }
+  .vc__disc { display: inline-flex; align-items: center; align-self: center; font-size: 0.6875rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: color-mix(in srgb, var(--vc-sel-bor, #C26433) 14%, transparent); color: var(--vc-sel-bor, #C26433); line-height: 1.4; }
+  .vc__price { font-size: 1.0625rem; font-weight: 700; color: var(--color-foreground); transition: color 0.18s ease; line-height: 1.3; white-space: nowrap; }
+  .vc:has(.vc__radio:checked) .vc__price { color: var(--vc-sel-bor, #C26433); }
+  .vc__check { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; min-width: 22px; border-radius: 50%; border: 1.5px solid var(--vc-border, #E5E1D8); color: transparent; flex-shrink: 0; transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease; }
+  .vc:has(.vc__radio:checked) .vc__check { background: var(--vc-sel-bor, #C26433); border-color: var(--vc-sel-bor, #C26433); color: #FFFFFF; }
+  .vc-pill { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1.5px solid var(--vc-border, #E5E1D8); background: var(--vc-bg, #FFFFFF); cursor: pointer; transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease; -webkit-tap-highlight-color: transparent; }
+  .vc-pill__text { font-size: 0.875rem; font-weight: 600; line-height: 1.3; color: var(--color-foreground); transition: color 0.18s ease; }
+  .vc-pill:hover:not(.vc-pill--unavailable):not(:has(.vc__radio:checked)) { border-color: var(--vc-sel-bor, #C26433); }
+  .vc-pill:has(.vc__radio:checked) { border-color: var(--vc-sel-bor, #C26433); background: var(--vc-sel-bg, #FFF5EE); box-shadow: inset 0 0 0 0.5px var(--vc-sel-bor, #C26433); }
+  .vc-pill:has(.vc__radio:checked) .vc-pill__text { color: var(--vc-sel-bor, #C26433); }
+  .vc-pill--unavailable { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .vc-pill:has(.vc__radio:focus-visible) { outline: 2px solid var(--vc-sel-bor, #C26433); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { .vc, .vc__check, .vc__price, .vc-pill, .vc-pill__text { transition: none; } }
+{% endstylesheet %}

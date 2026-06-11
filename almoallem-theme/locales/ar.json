@@ -217,6 +217,7 @@
     "price_from": "من {{ price }}",
     "price_regular": "السعر العادي",
     "price_sale": "السعر المخفض",
+    "price_on_selection": "السعر عند الاختيار",
     "price_filter_html": "أعلى سعر هو {{ price }}",
     "product_image": "صورة المنتج",
     "product_information": "معلومات المنتج",

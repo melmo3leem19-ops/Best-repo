@@ -195,7 +195,7 @@
                 "selected_bg": "#fff5ee",
                 "selected_border": "#c26433",
                 "show_compare_at": true,
-                "show_discount_badge": false,
+                "show_discount_badge": true,
                 "show_check": true,
                 "padding-block-start": 0,
                 "padding-block-end": 8,

@@ -1,0 +1,358 @@
+/* ==========================================================================
+   Featured Products — premium layout modes (.ai-fp)
+   Phase 4: bento / editorial / luxury / storytelling modes, hover effects,
+   reveal animations. Loaded by sections/featured-products.liquid.
+
+   Conventions (docs/almoallem/conventions-brief.md):
+   - transform/opacity animations only
+   - tokenized durations/easings
+   - logical properties only (RTL-safe)
+   - mobile-first, BEM-ish .ai-fp__* naming
+   - full prefers-reduced-motion override at the end of this file
+
+   These rules are keyed to modifier classes (.ai-fp--d-*, .ai-fp--m-*,
+   .ai-fp--hover-*, .ai-fp--anim-*). Sections using the legacy grid/carousel
+   layouts with default effects match none of them, so existing rendering
+   is untouched. Gap values arrive via --fp-gap-desktop / --fp-gap-mobile
+   custom properties set on the section root.
+   ========================================================================== */
+
+.ai-fp {
+  --motion-instant: 80ms;
+  --motion-fast: 180ms;
+  --motion-normal: 350ms;
+  --motion-slow: 600ms;
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-sharp: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ai-fp .ai-fp__item {
+  min-inline-size: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Mode: bento — varied tile spans, first product hero-sized
+   -------------------------------------------------------------------------- */
+
+@media screen and (max-width: 749px) {
+  .ai-fp--m-bento .ai-fp__list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--fp-gap-mobile, 20px);
+  }
+
+  .ai-fp--m-bento .ai-fp__item:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .ai-fp--d-bento .ai-fp__list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-flow: dense;
+    gap: var(--fp-gap-desktop, 20px);
+  }
+
+  .ai-fp--d-bento .ai-fp__item:first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Hero media fills the double tile; inner img is absolutely positioned. */
+  .ai-fp--d-bento .ai-fp__item:first-child .ai-fp__media {
+    flex: 1 1 auto;
+    padding-block-end: 0;
+    min-block-size: 320px;
+  }
+
+  /* Rhythm tile: every 7th product goes wide. */
+  .ai-fp--d-bento .ai-fp__item:nth-child(7n) {
+    grid-column: span 2;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mode: editorial — oversized imagery + asymmetric whitespace
+   Grid line numbers are writing-direction aware, so this mirrors in RTL.
+   -------------------------------------------------------------------------- */
+
+@media screen and (max-width: 749px) {
+  .ai-fp--m-editorial .ai-fp__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--fp-gap-mobile, 20px) * 1.5);
+  }
+
+  .ai-fp--m-editorial .ai-fp__item {
+    inline-size: 86%;
+  }
+
+  .ai-fp--m-editorial .ai-fp__item:nth-child(even) {
+    margin-inline-start: auto;
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .ai-fp--d-editorial .ai-fp__list {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--fp-gap-desktop, 20px);
+    row-gap: calc(var(--fp-gap-desktop, 20px) * 2.5);
+    align-items: start;
+  }
+
+  .ai-fp--d-editorial .ai-fp__item:nth-child(4n + 1) {
+    grid-column: 1 / span 7;
+  }
+
+  .ai-fp--d-editorial .ai-fp__item:nth-child(4n + 2) {
+    grid-column: 9 / span 4;
+    margin-block-start: 22%;
+  }
+
+  .ai-fp--d-editorial .ai-fp__item:nth-child(4n + 3) {
+    grid-column: 2 / span 4;
+  }
+
+  .ai-fp--d-editorial .ai-fp__item:nth-child(4n + 4) {
+    grid-column: 7 / span 6;
+    margin-block-start: 12%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mode: luxury — max-width centered, generous spacing, large serif titles
+   Subtle reveal is wired through [data-fp-reveal] (see Reveal section).
+   -------------------------------------------------------------------------- */
+
+.ai-fp--d-luxury .ai-fp__title,
+.ai-fp--m-luxury .ai-fp__title {
+  font-family: var(--font-heading--family, Georgia, 'Times New Roman', serif);
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+@media screen and (max-width: 749px) {
+  .ai-fp--m-luxury .ai-fp__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--fp-gap-mobile, 20px) * 2.5);
+    max-inline-size: 480px;
+    margin-inline: auto;
+  }
+
+  .ai-fp--m-luxury .ai-fp__title {
+    font-size: 1.375rem;
+  }
+
+  .ai-fp--m-luxury .ai-fp__info {
+    text-align: center;
+    padding-block: calc(var(--fp-gap-mobile, 20px) * 1.25);
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .ai-fp--d-luxury .ai-fp__list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: calc(var(--fp-gap-desktop, 20px) * 3);
+    max-inline-size: 960px;
+    margin-inline: auto;
+  }
+
+  .ai-fp--d-luxury .ai-fp__title {
+    font-size: 1.5rem;
+  }
+
+  .ai-fp--d-luxury .ai-fp__info {
+    text-align: center;
+    padding-block: calc(var(--fp-gap-desktop, 20px) * 1.5);
+    padding-inline: calc(var(--fp-gap-desktop, 20px) * 1.25);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Mode: storytelling — alternating full-width image/text rows
+   Alternation uses grid `order`, which follows writing direction (RTL-safe).
+   -------------------------------------------------------------------------- */
+
+@media screen and (max-width: 749px) {
+  .ai-fp--m-storytelling .ai-fp__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--fp-gap-mobile, 20px) * 1.5);
+  }
+
+  .ai-fp--m-storytelling .ai-fp__title {
+    font-size: 1.25rem;
+  }
+
+  .ai-fp--m-storytelling .ai-fp__info {
+    padding: var(--fp-gap-mobile, 20px);
+  }
+}
+
+@media screen and (min-width: 750px) {
+  .ai-fp--d-storytelling .ai-fp__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--fp-gap-desktop, 20px) * 2);
+  }
+
+  .ai-fp--d-storytelling .ai-fp__item {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+
+  .ai-fp--d-storytelling .ai-fp__media {
+    padding-block-end: 0;
+    block-size: 100%;
+    min-block-size: 380px;
+  }
+
+  .ai-fp--d-storytelling .ai-fp__item:nth-child(even) .ai-fp__media {
+    order: 2;
+  }
+
+  .ai-fp--d-storytelling .ai-fp__info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: calc(var(--fp-gap-desktop, 20px) * 2);
+  }
+
+  .ai-fp--d-storytelling .ai-fp__title {
+    font-size: 1.5rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Hover effect: lift (pointer devices; mirrored on :focus-within)
+   Higher specificity than the inline default-lift rule, so it wins.
+   -------------------------------------------------------------------------- */
+
+.ai-fp--hover-lift .ai-fp__item {
+  transition: transform var(--motion-fast) var(--ease-sharp),
+    box-shadow var(--motion-fast) var(--ease-sharp);
+}
+
+@media (hover: hover) {
+  .ai-fp--hover-lift .ai-fp__item:hover,
+  .ai-fp--hover-lift .ai-fp__item:focus-within {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 32px rgb(0 0 0 / 0.14);
+  }
+}
+
+.ai-fp--hover-lift .ai-fp__item:focus-within {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgb(0 0 0 / 0.14);
+}
+
+/* --------------------------------------------------------------------------
+   Hover effect: glass-overlay (conventions brief §2 recipe)
+   Card stays static; a glass sheet glides up over the lower image area.
+   Decorative only (no text), so glass contrast rules are not in play.
+   -------------------------------------------------------------------------- */
+
+.ai-fp--hover-glass .ai-fp__item:hover {
+  transform: none;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.08);
+}
+
+.ai-fp--hover-glass .ai-fp__media::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 34%;
+  background: rgb(255 255 255 / 0.18);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border-block-start: 1px solid rgb(255 255 255 / 0.35);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--motion-fast) var(--ease-sharp),
+    transform var(--motion-fast) var(--ease-sharp);
+  pointer-events: none;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .ai-fp--hover-glass .ai-fp__media::after {
+    background: rgb(255 255 255 / 0.45);
+  }
+}
+
+@media (hover: hover) {
+  .ai-fp--hover-glass .ai-fp__item:hover .ai-fp__media::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-fp--hover-glass .ai-fp__item:focus-within .ai-fp__media::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------
+   Reveal-on-scroll (animation presets + luxury's built-in subtle reveal)
+   Hidden state only applies after JS init (.ai-fp-js), so a JS failure
+   never leaves products invisible. Fires once per element.
+   -------------------------------------------------------------------------- */
+
+.ai-fp.ai-fp-js .ai-fp__item[data-fp-reveal]:not(.is-revealed) {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.ai-fp.ai-fp-js .ai-fp__item[data-fp-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--motion-slow) var(--ease-smooth),
+    transform var(--motion-slow) var(--ease-smooth);
+}
+
+/* Stagger capped at 6 items per the motion brief. */
+.ai-fp--anim-stagger.ai-fp-js .ai-fp__item[data-fp-reveal].is-revealed {
+  transition-delay: calc(min(var(--fp-i, 0), 6) * 70ms);
+}
+
+/* --------------------------------------------------------------------------
+   prefers-reduced-motion: kill transforms and motion; opacity <= 200ms only.
+   Overrides everything above (the only sanctioned !important usage).
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-fp *,
+  .ai-fp *::before,
+  .ai-fp *::after {
+    transform: none !important;
+    transition-property: opacity !important;
+    transition-duration: 200ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+
+  .ai-fp .ai-fp__item[data-fp-reveal] {
+    opacity: 1 !important;
+  }
+
+  .ai-fp--hover-glass .ai-fp__media::after {
+    opacity: 0 !important;
+  }
+
+  /* Carousel jumps without sliding under reduced motion. */
+  .ai-fp .ai-fp__list {
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep the RTL arrow glyphs mirrored despite the global transform kill. */
+  [dir='rtl'] .ai-fp .ai-fp__arrow svg {
+    transform: scaleX(-1) !important;
+  }
+}

@@ -1,0 +1,263 @@
+{% liquid
+  assign product_resource = closest.product
+  if request.visual_preview_mode and product_resource == blank
+    assign product_resource = collections.all.products.first
+  endif
+-%}
+
+{% unless product_resource == blank %}
+  {%
+    render 'variant-cards-picker',
+    product_resource: product_resource,
+    best_seller_label: block.settings.best_seller_label,
+    best_seller_bg: block.settings.best_seller_bg,
+    best_seller_color: block.settings.best_seller_color,
+    best_value_label: block.settings.best_value_label,
+    best_value_bg: block.settings.best_value_bg,
+    best_value_color: block.settings.best_value_color,
+    card_radius: block.settings.card_radius,
+    card_padding: block.settings.card_padding,
+    card_gap: block.settings.card_gap,
+    card_bg: block.settings.card_bg,
+    card_border: block.settings.card_border,
+    selected_bg: block.settings.selected_bg,
+    selected_border: block.settings.selected_border,
+    show_compare_at: block.settings.show_compare_at,
+    show_discount_badge: block.settings.show_discount_badge,
+    show_check: block.settings.show_check,
+    first_option_style: block.settings.first_option_style,
+    other_options_style: block.settings.other_options_style
+  %}
+{% endunless %}
+
+{% schema %}
+{
+  "name": "Variant Cards Picker",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Badges are automatic — set custom.best_seller or custom.best_value to true on any variant in the product admin."
+    },
+    {
+      "type": "header",
+      "content": "أفضل مبيعاً — Best Seller Badge"
+    },
+    {
+      "type": "text",
+      "id": "best_seller_label",
+      "label": "Badge text",
+      "default": "أفضل مبيعاً"
+    },
+    {
+      "type": "color",
+      "id": "best_seller_bg",
+      "label": "Background",
+      "default": "#FF8C00"
+    },
+    {
+      "type": "color",
+      "id": "best_seller_color",
+      "label": "Text color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "القيمة الأفضل — Best Value Badge"
+    },
+    {
+      "type": "text",
+      "id": "best_value_label",
+      "label": "Badge text",
+      "default": "القيمة الأفضل"
+    },
+    {
+      "type": "color",
+      "id": "best_value_bg",
+      "label": "Background",
+      "default": "#1A7F5A"
+    },
+    {
+      "type": "color",
+      "id": "best_value_color",
+      "label": "Text color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Card Style"
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "label": "Inner padding",
+      "min": 8,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Gap between cards",
+      "min": 6,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "color",
+      "id": "card_bg",
+      "label": "Card background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "card_border",
+      "label": "Card border",
+      "default": "#E5E1D8"
+    },
+    {
+      "type": "header",
+      "content": "Selected State"
+    },
+    {
+      "type": "color",
+      "id": "selected_bg",
+      "label": "Selected background",
+      "default": "#FFF5EE"
+    },
+    {
+      "type": "color",
+      "id": "selected_border",
+      "label": "Selected border / accent",
+      "default": "#C26433",
+      "info": "Also colors the discount badge and selected price."
+    },
+    {
+      "type": "header",
+      "content": "Display Options"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_compare_at",
+      "label": "Show compare-at price",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_discount_badge",
+      "label": "Show discount % badge",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_check",
+      "label": "Show check circle",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Option Groups"
+    },
+    {
+      "type": "paragraph",
+      "content": "Products with 2 or more options render one labeled group per option. Pick the control style per group."
+    },
+    {
+      "type": "select",
+      "id": "first_option_style",
+      "label": "First option style",
+      "options": [
+        {
+          "value": "cards",
+          "label": "Cards"
+        },
+        {
+          "value": "pills",
+          "label": "Pills"
+        }
+      ],
+      "default": "cards"
+    },
+    {
+      "type": "select",
+      "id": "other_options_style",
+      "label": "Other options style",
+      "options": [
+        {
+          "value": "cards",
+          "label": "Cards"
+        },
+        {
+          "value": "pills",
+          "label": "Pills"
+        }
+      ],
+      "default": "pills"
+    },
+    {
+      "type": "header",
+      "content": "Block Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "Start",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "End",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Variant Cards Picker",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}

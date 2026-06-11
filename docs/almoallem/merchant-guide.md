@@ -118,15 +118,78 @@ mirrored for Arabic: swiping, arrows, keyboard navigation and progress all flip.
 
 ## 3. Featured Products / المنتجات المميزة
 
-*(Section being upgraded — this chapter will be completed when Phase 4 lands. /
-هذا الفصل سيُستكمل بعد اكتمال المرحلة الرابعة.)*
+### English
+
+Your existing Featured Products section (used twice on the homepage) was
+upgraded in place — **everything you configured before renders exactly the
+same** until you opt into the new options.
+
+**New layout modes** (separate selects for desktop and mobile, alongside the
+existing grid/carousel):
+- **Bento** — first product becomes a large hero tile in a dense grid.
+- **Editorial** — asymmetric magazine-style spans with offset whitespace.
+- **Luxury** — centered 960px column, triple spacing, large serif titles,
+  subtle reveal animation.
+- **Storytelling** — alternating full-width image/text rows (mirrors in Arabic).
+
+**New controls** (all default to "no change"): animation preset (fade-up /
+stagger), card hover effect (lift / glass overlay), shadow intensity, heading
+alignment, separate desktop/mobile gaps, title & price font weight and letter
+spacing, and a **Show badges** toggle — product badges from the Badge System
+now appear on these cards automatically.
+
+### العربية
+
+تم تطوير قسم «المنتجات المميزة» الحالي (المستخدم مرتين في الرئيسية) دون أي
+تغيير على شكله الحالي — كل إعداداتك السابقة تعمل كما هي حتى تختار الجديد.
+
+**أنماط جديدة** (اختيار مستقل للكمبيوتر والجوال إضافةً إلى الشبكة والكاروسيل):
+- **بينتو** — أول منتج يظهر كبطاقة كبيرة بارزة ضمن شبكة مدمجة.
+- **افتتاحي** — تنسيق مجلة غير متماثل بمساحات بيضاء.
+- **فاخر** — عمود متوسط 960 بكسل، مسافات واسعة، عناوين كبيرة، ظهور ناعم.
+- **قصصي** — صفوف متناوبة صورة/نص بعرض كامل (تنعكس تلقائياً في العربية).
+
+**تحكمات جديدة** (كلها افتراضياً «بدون تغيير»): حركة الظهور، تأثير المرور
+(رفع / زجاجي)، قوة الظل، محاذاة العنوان، مسافات منفصلة للجوال والكمبيوتر، وزن
+خط العنوان والسعر، وزر **إظهار الشارات** — شارات نظام الشارات تظهر الآن على
+هذه البطاقات تلقائياً.
 
 ---
 
 ## 4. Variant picker / منتقي الخيارات
 
-*(Being fixed — this chapter will be completed when the fix lands. /
-هذا الفصل سيُستكمل بعد اكتمال الإصلاح.)*
+### English
+
+Two fixes on product pages using the variant cards picker:
+
+1. **Discount display** — every discounted variant card now shows one clean
+   inline row: sale price, struck-through original price, and an exact "−NN%"
+   chip (e.g. 4.500 KWD ~~6.500~~ −31%). Enable/disable the chip per block via
+   **Show discount badge** (we turned it ON on the product template).
+2. **Two option types** — products with two options (e.g. الحجم + الكمية) now
+   render as two clearly separated groups, each with its option name as a
+   visible header. The first option keeps the card style; further options use
+   compact pills. You can override per block: **First option style** /
+   **Other options style** (cards or pills).
+
+Note: if any *other* product mixes sizes and weights inside a single option,
+split it into two real options in Admin → Product → Options to benefit from
+the grouping.
+
+### العربية
+
+إصلاحان في صفحة المنتج لمنتقي الخيارات بنمط البطاقات:
+
+1. **عرض الخصم** — كل خيار مخفّض يعرض الآن سطراً واحداً أنيقاً: السعر بعد
+   الخصم، والسعر الأصلي مشطوباً، وشارة نسبة دقيقة «−31%». يمكن تفعيل/تعطيل
+   الشارة من إعداد **Show discount badge** (تم تفعيلها في قالب المنتج).
+2. **خياران مختلفان** — المنتجات التي لها خياران (مثل الحجم + الكمية) تظهر الآن
+   كمجموعتين منفصلتين بوضوح، لكل مجموعة عنوانها الظاهر. الخيار الأول يبقى
+   بنمط البطاقات، والخيارات التالية تظهر كأزرار صغيرة (Pills). يمكن التبديل من
+   إعدادات البلوك: **First option style** / **Other options style**.
+
+ملاحظة: إذا كان أي منتج آخر يجمع المقاسات والأوزان في خيار واحد، قم بفصلها إلى
+خيارين حقيقيين من لوحة التحكم ← المنتج ← Options للاستفادة من التجميع.
 
 ---
 

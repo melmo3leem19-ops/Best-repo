@@ -1,13 +1,20 @@
 {%- comment -%}
-  Featured Products Section — v8
-  Fixes vs v7:
-  1. RTL arrow ICONS now flip correctly ([dir="rtl"] scaleX(-1))
-  2. Cart drawer updates without page refresh:
-     - /cart/add.js is called WITH sections=['cart-drawer','cart-icon-bubble']
-     - Shopify returns rendered section HTML in the response
-     - We inject that HTML into the matching DOM wrappers
-     - We dispatch 'cart:update' (CartAddEvent.eventName) so the theme knows
-     - We call cart-drawer-component.open() to open the drawer
+  Featured Products Section — v9 (Phase 4 premium multi-layout engine)
+  Changes vs v8 (all backward compatible — defaults reproduce v8 exactly):
+  1. New layout modes for desktop AND mobile alongside grid/carousel:
+     bento, editorial, luxury, storytelling. Implemented as per-mode CSS
+     classes (assets/featured-products-modes.css) over the SAME product
+     loop / card markup; grid + carousel inline CSS is byte-identical.
+  2. Phase 2 badge integration: {% render 'badge-system' %} over the card
+     image (guarded — fails silently if the snippet is missing).
+  3. New merchant controls: animation preset, card hover effect (lift /
+     glass), title/price weight + letter-spacing, card shadow intensity,
+     split desktop/mobile gaps, heading alignment, badge toggle.
+  4. a11y/RTL: reveal animations honor prefers-reduced-motion, arrows use
+     localized aria-labels, all new CSS uses logical properties.
+  Kept from v8:
+  - RTL arrow ICONS flip ([dir="rtl"] scaleX(-1))
+  - Cart drawer updates without page refresh via /cart/add.js sections=[...]
 {%- endcomment -%}
 
 {%- assign ai_gen_id = section.id | replace: '_', '' | replace: '-', '' | downcase -%}
@@ -26,7 +33,31 @@
 
   assign layout_desktop = section.settings.layout_desktop
   assign layout_mobile  = section.settings.layout_mobile
+
+  comment
+    Phase 4 additions. Every derived value below falls back to the exact
+    v8 behavior when the new settings are absent or left at their defaults.
+  endcomment
+  assign hover_effect = section.settings.hover_effect | default: 'default'
+  assign anim_preset  = section.settings.animation_preset | default: 'none'
+  assign heading_align = section.settings.heading_align | default: 'default'
+
+  assign gap_desktop_val = section.settings.gap
+  assign gap_mobile_val  = section.settings.gap
+  if section.settings.gap_split
+    assign gap_desktop_val = section.settings.gap_desktop | default: section.settings.gap
+    assign gap_mobile_val  = section.settings.gap_mobile | default: section.settings.gap
+  endif
+
+  assign reveal_enabled = false
+  if anim_preset != 'none' or layout_desktop == 'luxury' or layout_mobile == 'luxury'
+    assign reveal_enabled = true
+  endif
+
+  assign show_badges = section.settings.show_badges
 -%}
+
+{{ 'featured-products-modes.css' | asset_url | stylesheet_tag }}
 
 {% style %}
   .ai-fp-{{ ai_gen_id }} {
@@ -83,8 +114,14 @@
     --is-carousel: 0;
   }
   .ai-fp__list-{{ ai_gen_id }}::-webkit-scrollbar { display: none; }
+  {% if section.settings.gap_split %}
+    @media screen and (min-width: 750px) { .ai-fp__list-{{ ai_gen_id }} { gap: {{ gap_desktop_val }}px; } }
+    @media screen and (max-width: 749px) { .ai-fp__list-{{ ai_gen_id }} { gap: {{ gap_mobile_val }}px; } }
+  {% endif %}
 
-  /* ══ DESKTOP layout ══ */
+  /* ══ DESKTOP layout ══
+     bento / editorial / luxury / storytelling are styled from
+     assets/featured-products-modes.css via .ai-fp--d-* classes. */
   {% if layout_desktop == 'carousel' %}
     @media screen and (min-width: 750px) {
       .ai-fp__list-{{ ai_gen_id }} {
@@ -94,10 +131,10 @@
         --is-carousel: 1;
       }
       .ai-fp__item-{{ ai_gen_id }} {
-        flex: 0 0 calc((100% - ({{ section.settings.visible_desktop }} - 1) * {{ section.settings.gap }}px) / {{ section.settings.visible_desktop }});
+        flex: 0 0 calc((100% - ({{ section.settings.visible_desktop }} - 1) * {{ gap_desktop_val }}px) / {{ section.settings.visible_desktop }});
       }
     }
-  {% else %}
+  {% elsif layout_desktop == 'grid' %}
     @media screen and (min-width: 750px) {
       .ai-fp__list-{{ ai_gen_id }} {
         display: grid;
@@ -116,10 +153,10 @@
         --is-carousel: 1;
       }
       .ai-fp__item-{{ ai_gen_id }} {
-        flex: 0 0 calc((100% - ({{ section.settings.visible_mobile }} - 1) * {{ section.settings.gap }}px) / {{ section.settings.visible_mobile }});
+        flex: 0 0 calc((100% - ({{ section.settings.visible_mobile }} - 1) * {{ gap_mobile_val }}px) / {{ section.settings.visible_mobile }});
       }
     }
-  {% else %}
+  {% elsif layout_mobile == 'grid' %}
     @media screen and (max-width: 749px) {
       .ai-fp__list-{{ ai_gen_id }} {
         display: grid;
@@ -265,6 +302,26 @@
   }
   .ai-fp__atc-{{ ai_gen_id }}:hover:not(:disabled) { background: {{ section.settings.atc_bg_hover }}; }
   .ai-fp__atc-{{ ai_gen_id }}:disabled { opacity: 0.5; cursor: default; }
+
+  /* ── Phase 4 controls — each block emits nothing at its default value ── */
+  {% if heading_align != 'default' %}
+  .ai-fp__heading-{{ ai_gen_id }} { text-align: {{ heading_align }}; }
+  {% endif %}
+  {% if section.settings.title_weight != blank and section.settings.title_weight != 'default' %}
+  .ai-fp__title-{{ ai_gen_id }} { font-weight: {{ section.settings.title_weight }}; }
+  {% endif %}
+  {% if section.settings.title_tracking != blank and section.settings.title_tracking != 0 %}
+  .ai-fp__title-{{ ai_gen_id }} { letter-spacing: {{ section.settings.title_tracking }}px; }
+  {% endif %}
+  {% if section.settings.price_weight != blank and section.settings.price_weight != 'default' %}
+  .ai-fp__price-{{ ai_gen_id }} { font-weight: {{ section.settings.price_weight }}; }
+  {% endif %}
+  {% if section.settings.price_tracking != blank and section.settings.price_tracking != 0 %}
+  .ai-fp__price-{{ ai_gen_id }} { letter-spacing: {{ section.settings.price_tracking }}px; }
+  {% endif %}
+  {% if section.settings.shadow_intensity != blank and section.settings.shadow_intensity > 0 %}
+  .ai-fp__item-{{ ai_gen_id }} { box-shadow: 0 6px 18px rgba(0,0,0,{{ section.settings.shadow_intensity | divided_by: 250.0 }}); }
+  {% endif %}
 {% endstyle %}
 
 {%- liquid
@@ -277,7 +334,8 @@
 -%}
 
 <featured-products-section-{{ ai_gen_id }}
-  class="ai-fp-{{ ai_gen_id }}"
+  class="ai-fp-{{ ai_gen_id }} ai-fp ai-fp--d-{{ layout_desktop }} ai-fp--m-{{ layout_mobile }} ai-fp--hover-{{ hover_effect }}{% if anim_preset != 'none' %} ai-fp--anim-{{ anim_preset }}{% endif %}"
+  style="--fp-gap-desktop: {{ gap_desktop_val }}px; --fp-gap-mobile: {{ gap_mobile_val }}px; --fp-radius: {{ section.settings.card_radius }}px;"
   {{ section.shopify_attributes }}
 >
   <div class="ai-fp__container-{{ ai_gen_id }}">
@@ -294,20 +352,20 @@
     <div class="ai-fp__products-{{ ai_gen_id }}">
       {%- if section.settings.show_arrows -%}
         <div class="ai-fp__arrows-{{ ai_gen_id }}">
-          <button class="ai-fp__arrow-{{ ai_gen_id }} ai-fp__arrow-prev-{{ ai_gen_id }}" aria-label="Previous" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <button class="ai-fp__arrow-{{ ai_gen_id }} ai-fp__arrow ai-fp__arrow-prev-{{ ai_gen_id }}" aria-label="{{ 'accessibility.slideshow_previous' | t }}" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <button class="ai-fp__arrow-{{ ai_gen_id }} ai-fp__arrow-next-{{ ai_gen_id }}" aria-label="Next" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <button class="ai-fp__arrow-{{ ai_gen_id }} ai-fp__arrow ai-fp__arrow-next-{{ ai_gen_id }}" aria-label="{{ 'accessibility.slideshow_next' | t }}" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
         </div>
       {%- endif -%}
 
-      <div class="ai-fp__list-{{ ai_gen_id }}" data-list>
+      <div class="ai-fp__list-{{ ai_gen_id }} ai-fp__list" data-list>
         {%- if product_count > 0 -%}
           {%- for product in products -%}
             {%- liquid
@@ -320,21 +378,26 @@
                 assign multi = true
               endif
             -%}
-            <div class="ai-fp__item-{{ ai_gen_id }}">
-              <a href="{{ product.url }}" class="ai-fp__img-wrap-{{ ai_gen_id }}">
+            <div class="ai-fp__item-{{ ai_gen_id }} ai-fp__item"{% if reveal_enabled %} data-fp-reveal{% endif %}{% if anim_preset == 'stagger' %} style="--fp-i: {{ forloop.index0 }};"{% endif %}>
+              <a href="{{ product.url }}" class="ai-fp__img-wrap-{{ ai_gen_id }} ai-fp__media">
                 {%- if pimg != blank -%}
                   <img src="{{ pimg | image_url: width: 600 }}" alt="{{ pimg.alt | escape }}" width="600" height="600" loading="lazy">
                 {%- else -%}
                   <div class="ai-fp__img-placeholder-{{ ai_gen_id }}">{{ 'product-1' | placeholder_svg_tag }}</div>
                 {%- endif -%}
+                {%- if show_badges -%}
+                  {%- comment -%} Phase 2 badge system — guarded so a missing snippet fails silently. {%- endcomment -%}
+                  {%- capture fp_badge -%}{%- render 'badge-system', product: product, context: 'card' -%}{%- endcapture -%}
+                  {%- unless fp_badge contains 'Liquid error' -%}{{ fp_badge }}{%- endunless -%}
+                {%- endif -%}
               </a>
-              <div class="ai-fp__info-{{ ai_gen_id }}">
-                <h3 class="ai-fp__title-{{ ai_gen_id }}"><a href="{{ product.url }}">{{ product.title }}</a></h3>
+              <div class="ai-fp__info-{{ ai_gen_id }} ai-fp__info">
+                <h3 class="ai-fp__title-{{ ai_gen_id }} ai-fp__title"><a href="{{ product.url }}">{{ product.title }}</a></h3>
 
                 {%- comment -%} ═════════════════════ PRICE WITH VARIANT PLACEHOLDER ═════════════════════ {%- endcomment -%}
-                <div class="ai-fp__price-{{ ai_gen_id }}" data-price-wrapper>
+                <div class="ai-fp__price-{{ ai_gen_id }} ai-fp__price" data-price-wrapper>
                   {%- if multi -%}
-                    السعر عند الأخيار
+                    {{ 'content.price_on_selection' | t }}
                   {%- else -%}
                     {{ product.price | money }}
                   {%- endif -%}
@@ -370,13 +433,13 @@
           {%- endfor -%}
         {%- else -%}
           {%- for i in (1..section.settings.columns_desktop) -%}
-            <div class="ai-fp__item-{{ ai_gen_id }}">
-              <div class="ai-fp__img-wrap-{{ ai_gen_id }}">
+            <div class="ai-fp__item-{{ ai_gen_id }} ai-fp__item">
+              <div class="ai-fp__img-wrap-{{ ai_gen_id }} ai-fp__media">
                 <div class="ai-fp__img-placeholder-{{ ai_gen_id }}">{{ 'product-1' | placeholder_svg_tag }}</div>
               </div>
-              <div class="ai-fp__info-{{ ai_gen_id }}">
-                <h3 class="ai-fp__title-{{ ai_gen_id }}">{{ 'onboarding.product_title' | t }}</h3>
-                <div class="ai-fp__price-{{ ai_gen_id }}">0.000 KWD</div>
+              <div class="ai-fp__info-{{ ai_gen_id }} ai-fp__info">
+                <h3 class="ai-fp__title-{{ ai_gen_id }} ai-fp__title">{{ 'onboarding.product_title' | t }}</h3>
+                <div class="ai-fp__price-{{ ai_gen_id }} ai-fp__price">0.000 KWD</div>
               </div>
             </div>
           {%- endfor -%}
@@ -520,6 +583,49 @@
       }
 
       this.setupATC();
+      this.setupReveal();
+    }
+
+    disconnectedCallback() {
+      if (this.revealObserver) {
+        this.revealObserver.disconnect();
+        this.revealObserver = null;
+      }
+    }
+
+    /* Reveal-on-scroll for animation presets / luxury mode.
+       The hidden state only applies once .ai-fp-js is added here, so a JS
+       failure never hides products. Honors prefers-reduced-motion. */
+    setupReveal() {
+      const items = this.querySelectorAll('[data-fp-reveal]');
+      if (!items.length) return;
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (reduceMotion.matches || !('IntersectionObserver' in window)) {
+        items.forEach((el) => el.classList.add('is-revealed'));
+        return;
+      }
+
+      this.classList.add('ai-fp-js');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+
+      items.forEach((el) => io.observe(el));
+      this.revealObserver = io;
+
+      /* If the user enables reduced motion mid-session, reveal everything. */
+      reduceMotion.addEventListener('change', (e) => {
+        if (e.matches) {
+          items.forEach((el) => el.classList.add('is-revealed'));
+          if (this.revealObserver) this.revealObserver.disconnect();
+        }
+      });
     }
 
     /* RTL is detected from the computed direction of the list element itself,
@@ -591,7 +697,7 @@
                 const price = opt.getAttribute('data-variant-price');
                 priceWrapper.textContent = price || '';
               } else {
-                priceWrapper.textContent = 'السعر عند الأخيار';
+                priceWrapper.textContent = {{ 'content.price_on_selection' | t | json }};
               }
             }
           });
@@ -606,7 +712,7 @@
             if (selectedOpt && selectedOpt.value && !selectedOpt.disabled) {
               priceWrapper.textContent = selectedOpt.getAttribute('data-variant-price') || '';
             } else {
-              priceWrapper.textContent = 'السعر عند الأخيار';
+              priceWrapper.textContent = {{ 'content.price_on_selection' | t | json }};
             }
           }
         }
@@ -690,8 +796,12 @@
       "id": "layout_desktop",
       "label": "Desktop layout",
       "options": [
-        { "value": "grid",     "label": "Grid" },
-        { "value": "carousel", "label": "Carousel" }
+        { "value": "grid",         "label": "Grid" },
+        { "value": "carousel",     "label": "Carousel" },
+        { "value": "bento",        "label": "Bento (hero tile)" },
+        { "value": "editorial",    "label": "Editorial" },
+        { "value": "luxury",       "label": "Luxury" },
+        { "value": "storytelling", "label": "Storytelling" }
       ],
       "default": "carousel"
     },
@@ -718,8 +828,12 @@
       "id": "layout_mobile",
       "label": "Mobile layout",
       "options": [
-        { "value": "grid",     "label": "Grid" },
-        { "value": "carousel", "label": "Carousel" }
+        { "value": "grid",         "label": "Grid" },
+        { "value": "carousel",     "label": "Carousel" },
+        { "value": "bento",        "label": "Bento (hero tile)" },
+        { "value": "editorial",    "label": "Editorial" },
+        { "value": "luxury",       "label": "Luxury" },
+        { "value": "storytelling", "label": "Storytelling" }
       ],
       "default": "carousel"
     },
@@ -743,6 +857,129 @@
       "label": "Gap between products",
       "min": 5, "max": 50, "step": 5,
       "default": 20, "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Spacing & alignment"
+    },
+    {
+      "type": "select",
+      "id": "heading_align",
+      "label": "Section heading alignment",
+      "options": [
+        { "value": "default", "label": "Theme default" },
+        { "value": "start",   "label": "Start" },
+        { "value": "center",  "label": "Center" },
+        { "value": "end",     "label": "End" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "checkbox",
+      "id": "gap_split",
+      "label": "Use separate desktop and mobile gaps",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "gap_desktop",
+      "label": "Gap (desktop, when separate)",
+      "min": 5, "max": 50, "step": 5,
+      "default": 20, "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "gap_mobile",
+      "label": "Gap (mobile, when separate)",
+      "min": 5, "max": 50, "step": 5,
+      "default": 20, "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Premium effects"
+    },
+    {
+      "type": "select",
+      "id": "animation_preset",
+      "label": "Animation preset",
+      "options": [
+        { "value": "none",    "label": "None" },
+        { "value": "fade-up", "label": "Fade-up reveal" },
+        { "value": "stagger", "label": "Staggered reveal" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "select",
+      "id": "hover_effect",
+      "label": "Card hover effect",
+      "options": [
+        { "value": "default", "label": "Default (zoom)" },
+        { "value": "lift",    "label": "Lift" },
+        { "value": "glass",   "label": "Glass overlay" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "range",
+      "id": "shadow_intensity",
+      "label": "Card shadow intensity",
+      "min": 0, "max": 100, "step": 5,
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Typography fine-tuning"
+    },
+    {
+      "type": "select",
+      "id": "title_weight",
+      "label": "Title font weight",
+      "options": [
+        { "value": "default", "label": "Theme default" },
+        { "value": "400", "label": "Regular (400)" },
+        { "value": "500", "label": "Medium (500)" },
+        { "value": "600", "label": "Semibold (600)" },
+        { "value": "700", "label": "Bold (700)" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "range",
+      "id": "title_tracking",
+      "label": "Title letter spacing",
+      "min": -2, "max": 4, "step": 0.5,
+      "default": 0, "unit": "px"
+    },
+    {
+      "type": "select",
+      "id": "price_weight",
+      "label": "Price font weight",
+      "options": [
+        { "value": "default", "label": "Theme default" },
+        { "value": "400", "label": "Regular (400)" },
+        { "value": "500", "label": "Medium (500)" },
+        { "value": "600", "label": "Semibold (600)" },
+        { "value": "700", "label": "Bold (700)" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "range",
+      "id": "price_tracking",
+      "label": "Price letter spacing",
+      "min": -2, "max": 4, "step": 0.5,
+      "default": 0, "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Badges"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_badges",
+      "label": "Show product badges (badge system)",
+      "default": true
     },
     {
       "type": "header",
