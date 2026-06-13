@@ -1,0 +1,631 @@
+{%- comment -%}
+================================================================================
+  مطحنة المعلم · AL MOALLEM MILL — PREMIUM PACKING SLIP
+  Native Shopify Packing Slip template (Settings → Shipping and delivery →
+  Packing slips → Edit). RTL Arabic + English, print-optimised A4 / Letter.
+--------------------------------------------------------------------------------
+  WHY THIS VERSION
+    The NATIVE packing slip engine renders one slip per shipment and exposes a
+    restricted variable set: `line_items_in_shipment`, `shipping_address`,
+    `billing_address`, `delivery_method`, `includes_all_line_items_in_order`,
+    `order`, and `shop`. Product images and some order/product fields are NOT
+    available here — for an image-rich slip use packing-slip-order-printer.liquid.
+--------------------------------------------------------------------------------
+  CUSTOMISE: everything you normally touch lives in the SETTINGS block below
+  (logo, contact details, return window, feature toggles). Brand colours are
+  taken straight from your logo and defined as CSS variables in :root.
+================================================================================
+{%- endcomment -%}
+
+{%- comment -%} ===================== 0. SETTINGS ===================== {%- endcomment -%}
+{%- liquid
+  # Hosted logo (already on your Shopify CDN)
+  assign logo_url = 'https://cdn.shopify.com/s/files/1/0876/0931/1266/files/IMG_8323_3fabdbaa-4a92-471d-b4d9-b5431e4f44be.png'
+
+  # Store contact / legal details (not exposed to native slips — set manually)
+  assign store_name_en   = 'Al Moallem Mill'
+  assign store_phone     = '+965 6680 5085'
+  assign store_country   = 'الكويت'
+  # store_tax_number example: 'الرقم الضريبي: 0000000000'
+  assign store_tax_number = ''
+  assign support_hours   = 'السبت – الخميس · 9 ص – 9 م'
+  # returns_window: free text shown in the returns policy block
+  assign returns_window  = '٧ أيام'
+
+  # Advanced feature toggles
+  assign show_qr        = true
+  assign show_barcode   = true
+  assign show_checklist = true
+  assign show_signature = true
+  assign show_prices    = true
+
+  # Server-rendered QR / barcode image providers (load at print time).
+  # Self-host or swap if your warehouse network blocks external requests.
+  assign qr_provider      = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=0&data='
+  assign barcode_provider = 'https://barcode.tec-it.com/barcode.ashx?code=Code128&dpi=96&imagetype=Png&data='
+-%}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إيصال الشحن – {{ shop.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── 1. BRAND TOKENS (extracted from the Al Moallem logo) ─────────── */
+    :root {
+      --brown-deep:  #3b2314;  /* primary text / dark panels   */
+      --brown-mid:   #8b5e3c;  /* secondary text / bronze       */
+      --brown-light: #ede0c4;  /* hairlines / soft fills        */
+      --cream:       #f5edd6;  /* page / panel background       */
+      --red:         #c0392b;  /* fez red — primary accent      */
+      --red-dark:    #a02d23;
+      --green:       #4a6741;  /* herb green — status accent    */
+      --white:       #ffffff;
+      --font-body:    'Cairo', sans-serif;
+      --font-display: 'Amiri', serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── 2. PAGE GEOMETRY (A4 + Letter) ──────────────────────────────── */
+    @page { size: A4; margin: 12mm; }
+
+    body {
+      background: #d5c9b4;
+      font-family: var(--font-body);
+      color: var(--brown-deep);
+      padding: 30px 16px 60px;
+      display: flex; justify-content: center; align-items: flex-start;
+      direction: rtl;
+    }
+
+    .slip {
+      width: 780px; max-width: 100%;
+      background: var(--cream);
+      box-shadow: 0 8px 60px rgba(59,35,20,.30), 0 2px 8px rgba(59,35,20,.12);
+      position: relative; overflow: hidden; direction: rtl;
+    }
+
+    /* ─── 3. HEADER ───────────────────────────────────────────────────── */
+    .top-band { height: 10px; background: linear-gradient(90deg, var(--red-dark) 0%, var(--red) 40%, var(--brown-mid) 100%); }
+
+    .header {
+      background: var(--brown-deep); padding: 26px 36px;
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      position: relative; overflow: hidden;
+    }
+    .header::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,255,255,.025) 18px, rgba(255,255,255,.025) 19px),
+        repeating-linear-gradient(-45deg, transparent, transparent 18px, rgba(255,255,255,.025) 18px, rgba(255,255,255,.025) 19px);
+    }
+    .header-logo {
+      width: 92px; height: 92px; object-fit: contain; border-radius: 50%;
+      border: 3px solid rgba(192,57,43,.6); background: rgba(245,237,214,.08);
+      padding: 4px; flex-shrink: 0; position: relative;
+    }
+    .header-logo-fallback {
+      width: 92px; height: 92px; border-radius: 50%; border: 3px solid rgba(192,57,43,.6);
+      background: var(--red); display: none; align-items: center; justify-content: center;
+      flex-shrink: 0; font-family: var(--font-display); color: var(--cream); font-size: 28px; font-weight: 700;
+    }
+    .header-info { flex: 1; text-align: right; position: relative; }
+    .header-name-ar { font-family: var(--font-display); font-size: 32px; color: var(--cream); line-height: 1.2; }
+    .header-name-en { font-size: 12px; color: var(--brown-light); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+    .header-meta { margin-top: 10px; display: flex; gap: 18px; justify-content: flex-end; flex-wrap: wrap; }
+    .header-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--brown-light); }
+    .header-badge { flex-shrink: 0; text-align: center; position: relative; }
+    .slip-label {
+      background: var(--red); color: var(--cream); font-size: 11px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase; padding: 5px 14px; border-radius: 2px;
+      display: block; margin-bottom: 8px;
+    }
+    .slip-title-ar { font-family: var(--font-display); font-size: 22px; color: var(--cream); display: block; }
+
+    .ornament-bar { background: var(--red); height: 4px; }
+
+    /* ─── 4. ORDER META STRIP ─────────────────────────────────────────── */
+    .order-meta-strip {
+      background: var(--brown-light); padding: 14px 36px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 2px solid var(--brown-mid); flex-wrap: wrap; gap: 10px;
+    }
+    .meta-pill { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .meta-pill-label { font-size: 10px; color: var(--brown-mid); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .meta-pill-value { font-size: 14px; font-weight: 700; color: var(--brown-deep); }
+    .meta-pill-value.highlight { color: var(--red); font-size: 16px; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px; background: var(--green);
+      color: var(--cream); font-size: 11px; font-weight: 700; padding: 4px 12px;
+      border-radius: 20px; letter-spacing: .5px;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #7ec87a; display: inline-block; }
+
+    /* ─── 5. INFO GRID (order / shipping / billing) ───────────────────── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 2px solid var(--brown-light); }
+    .info-card { padding: 20px 24px; }
+    .info-card + .info-card { border-right: 2px solid var(--brown-light); }
+    .info-card-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--red); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .info-card-title::after { content: ''; flex: 1; height: 1px; background: var(--brown-light); }
+    .info-card-body { font-size: 13px; line-height: 1.85; color: var(--brown-deep); }
+    .info-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .info-sub  { font-size: 12px; color: var(--brown-mid); }
+
+    /* ─── 6. SECTION HEADER ───────────────────────────────────────────── */
+    .section-header { padding: 12px 36px; background: var(--brown-deep); display: flex; align-items: center; gap: 10px; }
+    .section-header-text { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; color: var(--cream); }
+    .section-header-text .en { color: var(--brown-light); font-weight: 400; letter-spacing: 1px; }
+    .section-header-line { flex: 1; height: 1px; background: rgba(245,237,214,.2); }
+
+    /* ─── 7. PRODUCTS TABLE ───────────────────────────────────────────── */
+    .products-table { width: 100%; border-collapse: collapse; }
+    .products-table thead tr { background: var(--brown-mid); }
+    .products-table th {
+      padding: 11px 16px; font-size: 10.5px; letter-spacing: .5px; text-transform: uppercase;
+      font-weight: 700; color: var(--cream); text-align: right;
+    }
+    .products-table th.center, .products-table td.center { text-align: center; }
+    .products-table th.left, .products-table td.left { text-align: left; }
+    .products-table tbody tr:nth-child(even) { background: var(--brown-light); }
+    .products-table tbody tr:nth-child(odd)  { background: var(--white); }
+    .products-table td { padding: 12px 16px; font-size: 13px; color: var(--brown-deep); border-bottom: 1px solid rgba(139,94,60,.12); vertical-align: middle; }
+    .td-product-name { font-weight: 600; max-width: 230px; }
+    .td-meta { font-size: 11px; color: var(--brown-mid); margin-top: 2px; }
+    .td-meta b { color: var(--brown-deep); }
+    .td-variant { font-size: 11px; background: var(--cream); border: 1px solid var(--brown-light); border-radius: 20px; padding: 2px 10px; display: inline-block; color: var(--brown-mid); font-weight: 600; }
+    .td-qty { font-weight: 700; font-size: 15px; color: var(--brown-deep); }
+    .td-total { font-weight: 700; }
+    .li-prop { font-size: 11px; margin-top: 4px; padding: 3px 8px; background: rgba(192,57,43,.06); border-right: 2px solid var(--red); border-radius: 3px; }
+    .products-table tfoot tr { background: var(--brown-light); }
+    .products-table tfoot td { padding: 10px 16px; font-size: 12px; color: var(--brown-mid); border-top: 2px solid var(--brown-mid); font-weight: 600; }
+
+    /* ─── 8. NOTICES ──────────────────────────────────────────────────── */
+    .missing-items-notice { margin: 16px 36px; padding: 12px 18px; background: rgba(192,57,43,.06); border-right: 3px solid var(--red); border-radius: 4px; font-size: 13px; }
+
+    /* ─── 9. TOTALS + NOTES ───────────────────────────────────────────── */
+    .totals-section { display: flex; padding: 24px 36px 20px; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+    .totals-note { flex: 1; min-width: 220px; }
+    .totals-note-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--brown-mid); margin-bottom: 8px; }
+    .totals-note-body { font-size: 12px; color: var(--brown-mid); line-height: 1.8; }
+    .totals-box { width: 290px; flex-shrink: 0; border: 2px solid var(--brown-light); border-radius: 4px; overflow: hidden; }
+    .totals-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 16px; font-size: 13px; border-bottom: 1px solid var(--brown-light); }
+    .totals-row-label { color: var(--brown-mid); font-weight: 500; }
+    .totals-row-value { font-weight: 600; color: var(--brown-deep); }
+    .totals-row.discount .totals-row-value { color: var(--green); }
+    .totals-row.grand { background: var(--brown-deep); border-bottom: none; padding: 13px 16px; }
+    .totals-row.grand .totals-row-label { color: var(--cream); font-size: 15px; font-weight: 700; }
+    .totals-row.grand .totals-row-value { color: var(--red); font-size: 18px; font-weight: 900; }
+    .totals-row.due .totals-row-value { color: var(--red); font-weight: 700; }
+
+    /* ─── 10. OPERATIONS: checklist | codes ───────────────────────────── */
+    .ops-grid { display: grid; grid-template-columns: 1fr 300px; gap: 0; border-top: 2px solid var(--brown-light); }
+    .ops-cell { padding: 20px 28px; }
+    .ops-cell + .ops-cell { border-right: 2px solid var(--brown-light); }
+    .ops-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--brown-mid); margin-bottom: 12px; }
+    .check-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px dotted var(--brown-light); font-size: 12.5px; }
+    .check-row:last-child { border-bottom: 0; }
+    .check-box { width: 16px; height: 16px; border: 1.5px solid var(--brown-deep); border-radius: 3px; flex: none; }
+    .warehouse-lines { margin-top: 10px; }
+    .warehouse-lines .ln { height: 22px; border-bottom: 1px dotted var(--brown-mid); }
+    .codes { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+    .codes .qr img { width: 120px; height: 120px; }
+    .codes .bc img  { height: 54px; max-width: 240px; }
+    .codes .cap { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--brown-mid); margin-top: 4px; }
+
+    /* ─── 11. SIGNATURE ───────────────────────────────────────────────── */
+    .sign-section { display: flex; gap: 30px; padding: 18px 36px 4px; }
+    .sign { flex: 1; }
+    .sign .line { border-bottom: 1.5px solid var(--brown-deep); height: 34px; }
+    .sign .lbl { font-size: 10px; letter-spacing: .06em; color: var(--brown-mid); margin-top: 6px; }
+
+    /* ─── 12. POLICY / SUPPORT ────────────────────────────────────────── */
+    .policy-section { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 16px 36px 0; border: 1.5px dashed var(--brown-mid); border-radius: 4px; overflow: hidden; }
+    .policy-cell { padding: 14px 18px; }
+    .policy-cell + .policy-cell { border-right: 1.5px dashed var(--brown-mid); }
+    .policy-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+    .policy-body { font-size: 12px; color: var(--brown-deep); line-height: 1.7; }
+
+    /* ─── 13. FOOTER ──────────────────────────────────────────────────── */
+    .ornament { display: flex; justify-content: center; padding: 14px; }
+    .footer-divider { height: 4px; background: linear-gradient(90deg, var(--red) 0%, var(--brown-mid) 50%, var(--red-dark) 100%); }
+    .footer { background: var(--brown-deep); padding: 20px 36px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-thank { font-family: var(--font-display); font-size: 20px; color: var(--cream); font-style: italic; }
+    .footer-contacts { display: flex; gap: 18px; flex-wrap: wrap; }
+    .footer-contact-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--brown-light); }
+    .footer-contact-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .bottom-band { height: 6px; background: var(--red); }
+
+    /* ─── 14. PRINT HARDENING (A4/Letter, keep accents, B&W legible) ──── */
+    @media print {
+      body { background: white; padding: 0; }
+      .slip { width: 100%; box-shadow: none; }
+      /* Force brand bands/fills to print in colour; in greyscale they stay
+         legible because every coloured panel pairs dark bg with light text. */
+      .top-band, .header, .ornament-bar, .order-meta-strip, .status-badge,
+      .section-header, .products-table thead tr, .products-table tbody tr:nth-child(even),
+      .totals-row.grand, .footer-divider, .footer, .bottom-band, .slip-label,
+      .codes img, .li-prop, .missing-items-notice {
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      }
+      .ops-grid, .sign-section, .policy-section, .footer, .totals-section { page-break-inside: avoid; }
+      tr { page-break-inside: avoid; }
+    }
+
+    @media (max-width: 820px) {
+      body { padding: 0; } .slip { width: 100%; }
+      .info-grid, .policy-section { grid-template-columns: 1fr; }
+      .ops-grid { grid-template-columns: 1fr; }
+      .info-card + .info-card, .ops-cell + .ops-cell, .policy-cell + .policy-cell { border-right: none; border-top: 2px solid var(--brown-light); }
+    }
+  </style>
+</head>
+<body>
+
+{%- comment -%} ===== Pre-compute shipment totals from the items actually shipping ===== {%- endcomment -%}
+{% assign total_pieces = 0 %}
+{% assign subtotal_price = 0 %}
+{% for line_item in line_items_in_shipment %}
+  {% assign total_pieces = total_pieces | plus: line_item.shipping_quantity %}
+  {% if line_item.line_price %}
+    {% assign subtotal_price = subtotal_price | plus: line_item.line_price %}
+  {% else %}
+    {% assign line_total = line_item.price | times: line_item.shipping_quantity %}
+    {% assign subtotal_price = subtotal_price | plus: line_total %}
+  {% endif %}
+{% endfor %}
+{% assign total_line_items = line_items_in_shipment | size %}
+
+<div class="slip">
+
+  <!-- ░░ 1. TOP BAND ░░ -->
+  <div class="top-band"></div>
+
+  <!-- ░░ 2. HEADER: logo + store identity + slip label ░░ -->
+  <div class="header">
+    <img class="header-logo" src="{{ logo_url }}" alt="{{ shop.name }}"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+    <div class="header-logo-fallback">م م</div>
+
+    <div class="header-info">
+      <div class="header-name-ar">{{ shop.name }}</div>
+      <div class="header-name-en">{{ store_name_en }}</div>
+      <div class="header-meta">
+        <span class="header-meta-item">🌐 {{ shop.domain }}</span>
+        <span class="header-meta-item">📞 {{ store_phone }}</span>
+        <span class="header-meta-item">📍 {{ store_country }}</span>
+      </div>
+    </div>
+
+    <div class="header-badge">
+      <span class="slip-label">Packing Slip</span>
+      <span class="slip-title-ar">إيصال الشحن</span>
+    </div>
+  </div>
+
+  <div class="ornament-bar"></div>
+
+  <!-- ░░ 3. ORDER META STRIP: number / date / payment / status ░░ -->
+  <div class="order-meta-strip">
+    <div class="meta-pill">
+      <span class="meta-pill-label">رقم الطلب · Order</span>
+      <span class="meta-pill-value highlight">{{ order.name }}</span>
+    </div>
+    <div class="meta-pill">
+      <span class="meta-pill-label">التاريخ · Date</span>
+      <span class="meta-pill-value">{{ order.created_at | date: "%d %B %Y" }}</span>
+    </div>
+    <div class="meta-pill">
+      <span class="meta-pill-label">طريقة الدفع · Payment</span>
+      <span class="meta-pill-value">
+        {% if order.payment_gateway_names != blank %}{{ order.payment_gateway_names | join: ", " }}{% else %}—{% endif %}
+      </span>
+    </div>
+    <div class="meta-pill">
+      <span class="meta-pill-label">عدد القطع · Pieces</span>
+      <span class="meta-pill-value">{{ total_pieces }}</span>
+    </div>
+    <div class="meta-pill">
+      <span class="meta-pill-label">الحالة · Status</span>
+      <span class="status-badge">
+        <span class="status-dot"></span>
+        {% case order.fulfillment_status %}
+          {% when 'fulfilled' %}مكتمل · Fulfilled
+          {% when 'partial' %}شحن جزئي · Partial
+          {% when 'unfulfilled' %}قيد التجهيز · Processing
+          {% else %}مؤكد · Confirmed
+        {% endcase %}
+      </span>
+    </div>
+    {% if order.po_number != blank %}
+      <div class="meta-pill">
+        <span class="meta-pill-label">طلب الشراء · PO</span>
+        <span class="meta-pill-value">#{{ order.po_number }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ░░ 4. INFO GRID: order facts | shipping | billing ░░ -->
+  <div class="info-grid">
+
+    <!-- 4a. Order & customer details -->
+    <div class="info-card">
+      <div class="info-card-title">تفاصيل الطلب · Order</div>
+      <div class="info-card-body">
+        <div class="info-name">طلب {{ order.name }}</div>
+        <div>التاريخ: <strong>{{ order.created_at | date: "%d %B %Y" }}</strong></div>
+        {% if delivery_method.title != blank %}
+          <div>طريقة التوصيل: <strong>{{ delivery_method.title }}</strong></div>
+        {% endif %}
+        {% if shipping_address.phone != blank %}
+          <div class="info-sub" style="margin-top:6px;">📞 {{ shipping_address.phone }}</div>
+        {% endif %}
+        {% if includes_all_line_items_in_order == false %}
+          <div class="info-sub" style="margin-top:6px; color:var(--red);">شحنة جزئية · Partial shipment</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 4b. Shipping address -->
+    <div class="info-card">
+      <div class="info-card-title">عنوان الشحن · Ship To</div>
+      <div class="info-card-body">
+        {% if shipping_address != blank %}
+          <div class="info-name">{{ shipping_address.name }}</div>
+          {% if shipping_address.company != blank %}<div>{{ shipping_address.company }}</div>{% endif %}
+          <div>{{ shipping_address.address1 }}</div>
+          {% if shipping_address.address2 != blank %}<div>{{ shipping_address.address2 }}</div>{% endif %}
+          {% if shipping_address.city_province_zip != blank %}<div>{{ shipping_address.city_province_zip }}</div>{% endif %}
+          <div>{{ shipping_address.country }}</div>
+        {% else %}
+          <div class="info-sub">لا يوجد عنوان شحن · No shipping address</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 4c. Billing address -->
+    <div class="info-card">
+      <div class="info-card-title">عنوان الفوترة · Bill To</div>
+      <div class="info-card-body">
+        {% if billing_address != blank %}
+          <div class="info-name">{{ billing_address.name }}</div>
+          {% if billing_address.company != blank %}<div>{{ billing_address.company }}</div>{% endif %}
+          <div>{{ billing_address.address1 }}</div>
+          {% if billing_address.address2 != blank %}<div>{{ billing_address.address2 }}</div>{% endif %}
+          {% if billing_address.city_province_zip != blank %}<div>{{ billing_address.city_province_zip }}</div>{% endif %}
+          <div>{{ billing_address.country }}</div>
+        {% else %}
+          <div class="info-sub">نفس عنوان الشحن · Same as shipping</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ░░ 5. PRODUCTS SECTION HEADER ░░ -->
+  <div class="section-header">
+    <span class="section-header-text">المنتجات المشحونة <span class="en">/ Items in this shipment</span></span>
+    <div class="section-header-line"></div>
+  </div>
+
+  <!-- ░░ 6. PRODUCTS TABLE ░░ -->
+  <table class="products-table">
+    <thead>
+      <tr>
+        <th class="center" style="width:34px;">#</th>
+        <th>المنتج · Product</th>
+        <th class="center">SKU</th>
+        <th class="center">الكمية · Qty</th>
+        {% if show_prices %}
+          <th>سعر الوحدة · Unit</th>
+          <th>الإجمالي · Total</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for line_item in line_items_in_shipment %}
+        <tr>
+          <td class="center" style="color:var(--brown-mid); font-size:12px;">{{ forloop.index }}</td>
+          <td class="td-product-name">
+            {{ line_item.title }}
+            {% if line_item.variant_title != blank %}<div style="margin-top:3px;"><span class="td-variant">{{ line_item.variant_title }}</span></div>{% endif %}
+            {% if line_item.vendor != blank %}<div class="td-meta"><b>المورّد:</b> {{ line_item.vendor }}</div>{% endif %}
+            {%- comment -%} Line-item properties = gift notes / personalisation / product notes {%- endcomment -%}
+            {% for prop in line_item.properties %}
+              {% if prop.last != blank and prop.first != blank %}
+                {% unless prop.first == '_' %}
+                  <div class="li-prop"><b>{{ prop.first }}:</b> {{ prop.last }}</div>
+                {% endunless %}
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td class="center" style="font-size:11px; color:var(--brown-mid);">{% if line_item.sku != blank %}{{ line_item.sku }}{% else %}—{% endif %}</td>
+          <td class="center td-qty">{{ line_item.shipping_quantity }}{% if line_item.shipping_quantity != line_item.quantity %} / {{ line_item.quantity }}{% endif %}</td>
+          {% if show_prices %}
+            <td>{{ line_item.price | money }}</td>
+            <td class="td-total">
+              {% if line_item.line_price %}{{ line_item.line_price | money }}{% else %}{{ line_item.price | times: line_item.shipping_quantity | money }}{% endif %}
+            </td>
+          {% endif %}
+        </tr>
+
+        {%- comment -%} Bundle / grouped item context (e.g. "part of …") {%- endcomment -%}
+        {% for group in line_item.groups %}
+          <tr style="font-size:11px; background:rgba(139,94,60,.03);">
+            <td class="center"></td>
+            <td colspan="5" style="color:var(--brown-mid); padding:6px 16px;">
+              {% if group.deliverable? %}↳ لـ: {{ group.title }}{% else %}↳ جزء من: {{ group.title }}{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="{% if show_prices %}4{% else %}4{% endif %}" style="color:var(--brown-mid);">
+          الأصناف · Items: <strong style="color:var(--brown-deep);">{{ total_line_items }}</strong>
+          &nbsp;|&nbsp; القطع · Pieces: <strong style="color:var(--brown-deep);">{{ total_pieces }}</strong>
+        </td>
+        {% if show_prices %}
+          <td style="font-weight:700; color:var(--brown-deep);">المجموع:</td>
+          <td style="font-weight:700; color:var(--brown-deep);">{{ subtotal_price | money }}</td>
+        {% endif %}
+      </tr>
+    </tfoot>
+  </table>
+
+  {% unless includes_all_line_items_in_order %}
+    <!-- ░░ Partial shipment notice ░░ -->
+    <div class="missing-items-notice">⚠ هناك عناصر أخرى من طلبك ستصل في شحنة منفصلة · Some items ship separately.</div>
+  {% endunless %}
+
+  {% if show_prices %}
+  <!-- ░░ 7. TOTALS + NOTES ░░ -->
+  <div class="totals-section">
+    <div class="totals-note">
+      <div class="totals-note-title">ملاحظات · Notes</div>
+      <div class="totals-note-body">
+        {% if delivery_method.instructions != blank %}
+          <strong>تعليمات التوصيل:</strong> {{ delivery_method.instructions }}<br/>
+        {% endif %}
+        {% if order.note != blank %}
+          <strong>ملاحظة العميل:</strong> {{ order.note }}
+        {% else %}
+          يُرجى التحقق من سلامة المنتجات عند الاستلام. في حال وجود أي مشكلة تواصلوا معنا خلال 24 ساعة.
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="totals-box">
+      <div class="totals-row">
+        <span class="totals-row-label">المجموع الفرعي · Subtotal</span>
+        <span class="totals-row-value">{{ subtotal_price | money }}</span>
+      </div>
+      {% if order.total_discounts > 0 %}
+        <div class="totals-row discount">
+          <span class="totals-row-label">الخصم · Discount</span>
+          <span class="totals-row-value">– {{ order.total_discounts | money }}</span>
+        </div>
+      {% endif %}
+      {% if order.shipping_price > 0 %}
+        <div class="totals-row">
+          <span class="totals-row-label">رسوم التوصيل · Shipping</span>
+          <span class="totals-row-value">{{ order.shipping_price | money }}</span>
+        </div>
+      {% endif %}
+      {% if order.tax_price > 0 %}
+        <div class="totals-row">
+          <span class="totals-row-label">الضريبة · Tax</span>
+          <span class="totals-row-value">{{ order.tax_price | money }}</span>
+        </div>
+      {% endif %}
+      <div class="totals-row grand">
+        <span class="totals-row-label">الإجمالي · Total</span>
+        <span class="totals-row-value">{{ order.total_price | money }}</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ░░ 8. OPERATIONS: pick & pack checklist | QR + barcode ░░ -->
+  <div class="ops-grid">
+
+    {% if show_checklist %}
+    <div class="ops-cell">
+      <div class="ops-title">قائمة التجهيز والتغليف · Pick &amp; Pack Checklist</div>
+      <div class="check-row"><span class="check-box"></span> تم تجهيز جميع الأصناف ومطابقة الكميات · Items picked &amp; verified</div>
+      <div class="check-row"><span class="check-box"></span> فحص الجودة والحالة · Quality &amp; condition checked</div>
+      <div class="check-row"><span class="check-box"></span> تغليف وحماية المنتجات · Packed &amp; protected</div>
+      <div class="check-row"><span class="check-box"></span> إرفاق إيصال الشحن · Packing slip enclosed</div>
+      <div class="check-row"><span class="check-box"></span> إغلاق الطرد ولصق العنوان · Sealed &amp; labelled</div>
+
+      <div class="ops-title" style="margin-top:14px;">ملاحظات المستودع · Warehouse Notes</div>
+      <div class="warehouse-lines"><div class="ln"></div><div class="ln"></div></div>
+      <div style="margin-top:8px; font-size:11px; color:var(--brown-mid);">
+        تم التجهيز بواسطة · Packed by ____________ &nbsp; التاريخ · Date __________
+      </div>
+    </div>
+    {% endif %}
+
+    {% if show_qr or show_barcode %}
+    <div class="ops-cell">
+      <div class="ops-title" style="text-align:center;">المسح والتتبع · Scan &amp; Track</div>
+      <div class="codes">
+        {% if show_qr %}
+          {%- comment -%} QR payload = scannable order summary {%- endcomment -%}
+          {% capture qr_data %}{{ order.name }} | {{ shipping_address.name }} | {{ order.created_at | date: "%Y-%m-%d" }} | {{ total_pieces }} pcs{% endcapture %}
+          <div class="qr">
+            <img src="{{ qr_provider }}{{ qr_data | url_encode }}" alt="QR {{ order.name }}" />
+            <div class="cap">امسح لملخص الطلب · Order summary</div>
+          </div>
+        {% endif %}
+        {% if show_barcode %}
+          {%- comment -%} Code128 barcode of the order number for WMS scanning {%- endcomment -%}
+          <div class="bc">
+            <img src="{{ barcode_provider }}{{ order.name | url_encode }}" alt="Barcode {{ order.name }}" />
+            <div class="cap">{{ order.name }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if show_signature %}
+  <!-- ░░ 9. SIGNATURE: customer receipt confirmation ░░ -->
+  <div class="sign-section">
+    <div class="sign"><div class="line"></div><div class="lbl">توقيع المستلم · Received by (signature)</div></div>
+    <div class="sign" style="max-width:180px;"><div class="line"></div><div class="lbl">التاريخ · Date</div></div>
+  </div>
+  {% endif %}
+
+  <!-- ░░ 10. POLICY + SUPPORT ░░ -->
+  <div class="policy-section">
+    <div class="policy-cell">
+      <div class="policy-title">الإرجاع والاستبدال · Returns &amp; Exchanges</div>
+      <div class="policy-body">
+        يمكن إرجاع المنتجات غير المستخدمة خلال {{ returns_window }} من الاستلام مع الاحتفاظ بهذا الإيصال.
+        <br/>Unused items may be returned within {{ returns_window }} of delivery — please keep this slip.
+      </div>
+    </div>
+    <div class="policy-cell">
+      <div class="policy-title">خدمة العملاء · Customer Care</div>
+      <div class="policy-body">
+        📞 {{ store_phone }}<br/>
+        ✉ {{ shop.email }}<br/>
+        🕑 {{ support_hours }}
+      </div>
+    </div>
+  </div>
+
+  <!-- ░░ 11. ORNAMENT ░░ -->
+  <div class="ornament">
+    <svg width="320" height="20" viewBox="0 0 320 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="10" x2="120" y2="10" stroke="#8b5e3c" stroke-width="1" stroke-opacity=".5"/>
+      <polygon points="140,4 146,10 140,16 134,10" fill="#c0392b" opacity=".7"/>
+      <polygon points="160,4 166,10 160,16 154,10" fill="#c0392b" opacity=".4"/>
+      <polygon points="180,4 186,10 180,16 174,10" fill="#c0392b" opacity=".7"/>
+      <line x1="200" y1="10" x2="320" y2="10" stroke="#8b5e3c" stroke-width="1" stroke-opacity=".5"/>
+    </svg>
+  </div>
+
+  <!-- ░░ 12. FOOTER ░░ -->
+  <div class="footer-divider"></div>
+  <div class="footer">
+    <div class="footer-thank">شكراً لثقتكم بـ{{ shop.name }} ✦</div>
+    <div class="footer-contacts">
+      <div class="footer-contact-item"><div class="footer-contact-icon">🌐</div>{{ shop.domain }}</div>
+      <div class="footer-contact-item"><div class="footer-contact-icon">📞</div>{{ store_phone }}</div>
+      <div class="footer-contact-item"><div class="footer-contact-icon">✉</div>{{ shop.email }}</div>
+    </div>
+  </div>
+  <div class="bottom-band"></div>
+
+</div><!-- /slip -->
+
+</body>
+</html>
