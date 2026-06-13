@@ -31,13 +31,13 @@
     /* Crest */
     .crest { text-align:center; padding:0 0 2px; }
     .crest .logo-wrap { display:inline-block; position:relative; }
-    .crest .logo { width:62px; height:62px; object-fit:contain; border-radius:50%; border:1.5px solid var(--bronze); padding:3px; background:#fff; }
-    .crest .logo-fallback { width:62px; height:62px; border-radius:50%; border:1.5px solid var(--bronze); background:var(--cream); display:none; align-items:center; justify-content:center; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--red); }
-    .crest .name-ar { font-family:var(--font-display); font-size:24px; font-weight:700; margin-top:4px; }
+    .crest .logo { width:56px; height:56px; object-fit:contain; border-radius:50%; border:1.5px solid var(--bronze); padding:3px; background:#fff; }
+    .crest .logo-fallback { width:56px; height:56px; border-radius:50%; border:1.5px solid var(--bronze); background:var(--cream); display:none; align-items:center; justify-content:center; font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--red); }
+    .crest .name-ar { font-family:var(--font-display); font-size:22px; font-weight:700; margin-top:3px; }
     .crest .name-en { font-size:9.5px; letter-spacing:.4em; text-transform:uppercase; color:var(--bronze); margin-top:1px; }
 
     /* Diamond rule */
-    .rule { display:flex; align-items:center; gap:10px; margin:6px 0; }
+    .rule { display:flex; align-items:center; gap:10px; margin:4px 0; }
     .rule::before, .rule::after { content:''; flex:1; height:1px; background:var(--line); }
     .rule .dot { width:6px; height:6px; background:var(--red); transform:rotate(45deg); opacity:.85; }
     .rule .dot.sm { width:4px; height:4px; background:var(--bronze); }
@@ -45,7 +45,7 @@
 
     /* Meta band */
     .meta-band { display:flex; border:1px solid var(--line); border-radius:3px; overflow:hidden; background:#fff; }
-    .meta-cell { flex:1; padding:6px 9px; text-align:center; }
+    .meta-cell { flex:1; padding:5px 8px; text-align:center; }
     .meta-cell + .meta-cell { border-right:1px solid var(--line); }
     .meta-cell .lbl { font-size:8px; letter-spacing:.12em; text-transform:uppercase; color:var(--bronze); }
     .meta-cell .val { font-size:13px; font-weight:700; margin-top:2px; }
@@ -54,10 +54,10 @@
     .status-tag { display:inline-block; margin-top:3px; font-size:9.5px; font-weight:700; color:var(--green); border:1px solid var(--green); border-radius:999px; padding:1px 9px; }
 
     /* Addresses (Delivery + Ship To) */
-    .addr-grid { display:grid; grid-template-columns:1fr 1fr; margin-top:8px; }
+    .addr-grid { display:grid; grid-template-columns:1fr 1fr; margin-top:5px; }
     .addr { padding:0 16px; }
     .addr + .addr { border-right:1px solid var(--line); }
-    .addr h3 { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--red); margin-bottom:6px; font-weight:700; }
+    .addr h3 { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--red); margin-bottom:4px; font-weight:700; }
     .addr .nm { font-weight:700; font-size:13px; }
     .addr .ln { font-size:12px; }
     .addr .sub { font-size:11px; color:var(--bronze); }
@@ -67,22 +67,26 @@
     table.items thead th { font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--bronze); font-weight:700; text-align:right; padding:0 9px 5px; border-bottom:1.5px solid var(--ink); }
     table.items thead th.c { text-align:center; }
     table.items thead th.l { text-align:left; }
-    table.items tbody td { padding:6px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+    table.items tbody td { padding:4px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
     table.items tbody td.c { text-align:center; }
     table.items tbody td.l { text-align:left; }
     .idx { display:inline-flex; align-items:center; justify-content:center; width:19px; height:19px; border:1px solid var(--bronze); border-radius:50%; font-size:10px; color:var(--bronze); }
-    .it-name { font-weight:600; font-size:13px; }
-    .it-sub { font-size:11.5px; color:var(--bronze); margin-top:1px; }       /* variant subtitle */
-    .it-meta { font-size:10.5px; color:var(--bronze); margin-top:2px; }
+    .prod { display:flex; gap:8px; align-items:flex-start; }
+    .prod-info { flex:1; }
+    .thumb { width:38px; height:38px; object-fit:cover; border:1px solid var(--line); border-radius:4px; background:#fff; flex:none; }
+    .thumb-ph { width:38px; height:38px; border:1px dashed var(--line); border-radius:4px; flex:none; display:flex; align-items:center; justify-content:center; color:var(--bronze); font-size:11px; }
+    .it-name { font-weight:600; font-size:12.5px; }
+    .it-sub { font-size:11px; color:var(--bronze); margin-top:0; }       /* variant subtitle */
+    .it-meta { font-size:10px; color:var(--bronze); margin-top:0; }
     .it-meta b { color:var(--ink); }
     .it-prop { font-size:10.5px; margin-top:3px; padding-right:8px; border-right:2px solid var(--red); }
     .it-qty { font-family:var(--font-display); font-size:16px; font-weight:700; }
 
     /* Summary */
-    .sum-wrap { display:flex; justify-content:space-between; gap:24px; margin-top:8px; flex-wrap:wrap; }
+    .sum-wrap { display:flex; justify-content:space-between; gap:24px; margin-top:5px; flex-wrap:wrap; }
     .note { flex:1; min-width:230px; }
-    .note h4 { font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:4px; }
-    .note p { font-size:11.5px; color:var(--bronze); line-height:1.65; }
+    .note h4 { font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:3px; }
+    .note p { font-size:11.5px; color:var(--bronze); line-height:1.5; }
     .sum { width:270px; }
     .sum .r { display:flex; justify-content:space-between; padding:4px 0; font-size:12.5px; }
     .sum .r .l { color:var(--bronze); }
@@ -94,7 +98,7 @@
     .partial { margin-top:10px; font-size:11px; color:var(--red); border:1px dashed var(--red); border-radius:3px; padding:6px 10px; }
 
     /* Combined end row: scan codes + signature on one line */
-    .endrow { display:flex; gap:22px; align-items:flex-end; margin-top:8px; }
+    .endrow { display:flex; gap:22px; align-items:flex-end; margin-top:5px; }
     .codes { display:flex; gap:18px; align-items:center; border:1px solid var(--line); border-radius:3px; padding:7px 12px; }
     .codes .qr img { width:68px; height:68px; display:block; }
     .codes .bc img { height:36px; max-width:170px; display:block; }
@@ -154,7 +158,7 @@
   <div class="meta-band">
     <div class="meta-cell">
       <div class="lbl">رقم الطلب · Order</div>
-      <div class="val red">#AM-10427</div>
+      <div class="val red">#1143</div>
     </div>
     <div class="meta-cell">
       <div class="lbl">التاريخ · Date</div>
@@ -179,19 +183,19 @@
   <div class="addr-grid">
     <div class="addr">
       <h3>التوصيل · Delivery</h3>
-      <div class="ln"><b>توصيل سريع</b></div>
-      <div class="sub">الاتصال قبل الوصول بـ15 دقيقة.</div>
-      <div class="sub">📞 +965 9000 1234</div>
+      
+      <div class="sub">الاتصال عند الوصول</div>
+      <div class="sub">📞 95593130</div>
       
     </div>
     <div class="addr">
       <h3>عنوان الشحن · Ship To</h3>
       
-        <div class="nm">سارة عبدالله</div>
+        <div class="nm">Hmoud Meshal</div>
         
-        <div class="ln">قطعة 4، شارع 12، منزل 8</div>
+        <div class="ln">سلوى / ق 7 / ش 6 / م 147</div>
         
-        <div class="ln">السالمية، حولي 22033</div>
+        <div class="ln">سلوى KW-HA</div>
         <div class="ln">الكويت</div>
       
     </div>
@@ -218,47 +222,133 @@
     <tbody><tr>
           <td class="c"><span class="idx">1</span></td>
           <td>
-            <div class="it-name">بهارات مشكلة فاخرة</div><div class="it-sub">500 جم</div>
-            <div class="it-meta"><b>المورّد:</b> مطحنة المعلم</div>
-            
+            <div class="prod">
+              <img class="thumb" src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=img" alt="">
+                
+              
+              <div class="prod-info">
+                <div class="it-name">جلي الدببة الملونة</div>
+                <div class="it-sub">1 كيلو</div>
+                <div class="it-meta"><b>المورّد:</b> Al Moallem Mill</div>
+                
+              </div>
+            </div>
           </td>
-          <td class="c muted" style="font-size:11px;">SPC-MIX-500</td>
-          <td class="c"><span class="it-qty">2</span></td>
+          <td class="c muted" style="font-size:11px;">—</td>
+          <td class="c"><span class="it-qty">1</span></td>
           
-            <td class="l">4.500 KWD</td>
-            <td class="l" style="font-weight:700;">9.000 KWD</td>
+            <td class="l">2.500 د.ك</td>
+            <td class="l" style="font-weight:700;">2.500 د.ك</td>
           
         </tr>
       <tr>
           <td class="c"><span class="idx">2</span></td>
           <td>
-            <div class="it-name">لوز محمص</div>
-            <div class="it-meta"><b>المورّد:</b> مطحنة المعلم</div>
-            
+            <div class="prod">
+              <img class="thumb" src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=img" alt="">
+                
               
-                <div class="it-prop"><b>رسالة هدية:</b> كل عام وأنتم بخير 🌹</div>
-              
-            
+              <div class="prod-info">
+                <div class="it-name">جلي التوت المشكل</div>
+                <div class="it-sub">300 غرام</div>
+                <div class="it-meta"><b>المورّد:</b> Al Moallem Mill</div>
+                
+              </div>
+            </div>
           </td>
-          <td class="c muted" style="font-size:11px;">NUT-ALM-250</td>
+          <td class="c muted" style="font-size:11px;">—</td>
           <td class="c"><span class="it-qty">1</span></td>
           
-            <td class="l">3.250 KWD</td>
-            <td class="l" style="font-weight:700;">3.250 KWD</td>
+            <td class="l">1.500 د.ك</td>
+            <td class="l" style="font-weight:700;">1.500 د.ك</td>
           
         </tr>
       <tr>
           <td class="c"><span class="idx">3</span></td>
           <td>
-            <div class="it-name">زعفران درجة أولى</div><div class="it-sub">5 جم</div>
-            <div class="it-meta"><b>المورّد:</b> مطحنة المعلم</div>
-            
+            <div class="prod">
+              <img class="thumb" src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=img" alt="">
+                
+              
+              <div class="prod-info">
+                <div class="it-name">حلاو الفوكس بنكهة توت المشكلة</div>
+                
+                <div class="it-meta"><b>المورّد:</b> Fox's</div>
+                
+              </div>
+            </div>
           </td>
-          <td class="c muted" style="font-size:11px;">SAF-PR-5</td>
+          <td class="c muted" style="font-size:11px;">—</td>
           <td class="c"><span class="it-qty">1</span></td>
           
-            <td class="l">6.000 KWD</td>
-            <td class="l" style="font-weight:700;">6.000 KWD</td>
+            <td class="l">0.500 د.ك</td>
+            <td class="l" style="font-weight:700;">0.500 د.ك</td>
+          
+        </tr>
+      <tr>
+          <td class="c"><span class="idx">4</span></td>
+          <td>
+            <div class="prod">
+              <img class="thumb" src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=img" alt="">
+                
+              
+              <div class="prod-info">
+                <div class="it-name">كادبوري فليك</div>
+                
+                <div class="it-meta"><b>المورّد:</b> Al Moallem Mill</div>
+                
+              </div>
+            </div>
+          </td>
+          <td class="c muted" style="font-size:11px;">—</td>
+          <td class="c"><span class="it-qty">2</span></td>
+          
+            <td class="l">1.000 د.ك</td>
+            <td class="l" style="font-weight:700;">2.000 د.ك</td>
+          
+        </tr>
+      <tr>
+          <td class="c"><span class="idx">5</span></td>
+          <td>
+            <div class="prod">
+              <img class="thumb" src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=img" alt="">
+                
+              
+              <div class="prod-info">
+                <div class="it-name">شوكولاتة بيضة كندر</div>
+                
+                <div class="it-meta"><b>المورّد:</b> Kinder</div>
+                
+              </div>
+            </div>
+          </td>
+          <td class="c muted" style="font-size:11px;">—</td>
+          <td class="c"><span class="it-qty">3</span></td>
+          
+            <td class="l">0.750 د.ك</td>
+            <td class="l" style="font-weight:700;">2.250 د.ك</td>
+          
+        </tr>
+      <tr>
+          <td class="c"><span class="idx">6</span></td>
+          <td>
+            <div class="prod">
+              <img class="thumb" src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=img" alt="">
+                
+              
+              <div class="prod-info">
+                <div class="it-name">شوكولاتة كادبوري بحليب كامل الدسم</div>
+                
+                <div class="it-meta"><b>المورّد:</b> Cadbury</div>
+                
+              </div>
+            </div>
+          </td>
+          <td class="c muted" style="font-size:11px;">—</td>
+          <td class="c"><span class="it-qty">3</span></td>
+          
+            <td class="l">0.850 د.ك</td>
+            <td class="l" style="font-weight:700;">2.550 د.ك</td>
           
         </tr>
       
@@ -271,14 +361,14 @@
   <div class="sum-wrap">
     <div class="note">
       <h4>ملاحظات · Notes</h4>
-      <p>يرجى التغليف كهدية مع بطاقة شكر.</p>
+      <p>يُرجى التحقق من سلامة المنتجات عند الاستلام.</p>
     </div>
     
     <div class="sum">
-      <div class="r"><span class="l">المجموع الفرعي · Subtotal</span><span class="v">18.250 KWD</span></div>
-      <div class="r disc"><span class="l">الخصم · Discount</span><span class="v">– 0.500 KWD</span></div>
-      <div class="r"><span class="l">التوصيل · Shipping</span><span class="v">1.000 KWD</span></div>
-      <div class="grand"><span class="l">الإجمالي · Total</span><span class="v">16.000 KWD</span></div>
+      <div class="r"><span class="l">المجموع الفرعي · Subtotal</span><span class="v">11.300 د.ك</span></div>
+      
+      
+      <div class="grand"><span class="l">الإجمالي · Total</span><span class="v">8.050 د.ك</span></div>
     </div>
     
   </div>
@@ -289,10 +379,10 @@
     <div class="codes">
       
         
-        <div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=0&data=%23AM-10427+%7C+%D8%B3%D8%A7%D8%B1%D8%A9+%D8%B9%D8%A8%D8%AF%D8%A7%D9%84%D9%84%D9%87+%7C+2026-06-12+%7C+4+pcs" alt="QR #AM-10427"><div class="cap">ملخص · Summary</div></div>
+        <div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=0&data=%231143+%7C+Hmoud+Meshal+%7C+2026-06-12+%7C+11+pcs" alt="QR #1143"><div class="cap">ملخص · Summary</div></div>
       
       
-        <div class="bc"><img src="https://barcode.tec-it.com/barcode.ashx?code=Code128&dpi=96&imagetype=Png&data=%23AM-10427" alt="Barcode #AM-10427"><div class="cap">#AM-10427</div></div>
+        <div class="bc"><img src="https://barcode.tec-it.com/barcode.ashx?code=Code128&dpi=96&imagetype=Png&data=%231143" alt="Barcode #1143"><div class="cap">#1143</div></div>
       
     </div>
     

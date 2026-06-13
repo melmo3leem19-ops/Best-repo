@@ -26,15 +26,15 @@
   assign show_barcode   = true
   assign show_signature = true
   assign show_prices    = true
+  assign show_images    = true
 
   assign qr_provider      = 'https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=0&data='
   assign barcode_provider = 'https://barcode.tec-it.com/barcode.ashx?code=Code128&dpi=96&imagetype=Png&data='
 
-  # COD detection from the order's payment gateway name(s)
-  assign gw = order.payment_gateway_names | join: ' ' | downcase
-  assign is_cod = false
-  if gw contains 'cash on delivery' or gw contains 'cod' or gw contains 'الدفع عند'
-    assign is_cod = true
+  # Payment: if the order is marked PAID → online payment, otherwise COD
+  assign is_paid = false
+  if order.financial_status == 'paid'
+    assign is_paid = true
   endif
 -%}
 
@@ -71,13 +71,13 @@
     /* Crest */
     .crest { text-align:center; padding:0 0 2px; }
     .crest .logo-wrap { display:inline-block; position:relative; }
-    .crest .logo { width:62px; height:62px; object-fit:contain; border-radius:50%; border:1.5px solid var(--bronze); padding:3px; background:#fff; }
-    .crest .logo-fallback { width:62px; height:62px; border-radius:50%; border:1.5px solid var(--bronze); background:var(--cream); display:none; align-items:center; justify-content:center; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--red); }
-    .crest .name-ar { font-family:var(--font-display); font-size:24px; font-weight:700; margin-top:4px; }
+    .crest .logo { width:56px; height:56px; object-fit:contain; border-radius:50%; border:1.5px solid var(--bronze); padding:3px; background:#fff; }
+    .crest .logo-fallback { width:56px; height:56px; border-radius:50%; border:1.5px solid var(--bronze); background:var(--cream); display:none; align-items:center; justify-content:center; font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--red); }
+    .crest .name-ar { font-family:var(--font-display); font-size:22px; font-weight:700; margin-top:3px; }
     .crest .name-en { font-size:9.5px; letter-spacing:.4em; text-transform:uppercase; color:var(--bronze); margin-top:1px; }
 
     /* Diamond rule */
-    .rule { display:flex; align-items:center; gap:10px; margin:6px 0; }
+    .rule { display:flex; align-items:center; gap:10px; margin:4px 0; }
     .rule::before, .rule::after { content:''; flex:1; height:1px; background:var(--line); }
     .rule .dot { width:6px; height:6px; background:var(--red); transform:rotate(45deg); opacity:.85; }
     .rule .dot.sm { width:4px; height:4px; background:var(--bronze); }
@@ -85,7 +85,7 @@
 
     /* Meta band */
     .meta-band { display:flex; border:1px solid var(--line); border-radius:3px; overflow:hidden; background:#fff; }
-    .meta-cell { flex:1; padding:6px 9px; text-align:center; }
+    .meta-cell { flex:1; padding:5px 8px; text-align:center; }
     .meta-cell + .meta-cell { border-right:1px solid var(--line); }
     .meta-cell .lbl { font-size:8px; letter-spacing:.12em; text-transform:uppercase; color:var(--bronze); }
     .meta-cell .val { font-size:13px; font-weight:700; margin-top:2px; }
@@ -94,10 +94,10 @@
     .status-tag { display:inline-block; margin-top:3px; font-size:9.5px; font-weight:700; color:var(--green); border:1px solid var(--green); border-radius:999px; padding:1px 9px; }
 
     /* Addresses (Delivery + Ship To) */
-    .addr-grid { display:grid; grid-template-columns:1fr 1fr; margin-top:8px; }
+    .addr-grid { display:grid; grid-template-columns:1fr 1fr; margin-top:5px; }
     .addr { padding:0 16px; }
     .addr + .addr { border-right:1px solid var(--line); }
-    .addr h3 { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--red); margin-bottom:6px; font-weight:700; }
+    .addr h3 { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--red); margin-bottom:4px; font-weight:700; }
     .addr .nm { font-weight:700; font-size:13px; }
     .addr .ln { font-size:12px; }
     .addr .sub { font-size:11px; color:var(--bronze); }
@@ -107,22 +107,26 @@
     table.items thead th { font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--bronze); font-weight:700; text-align:right; padding:0 9px 5px; border-bottom:1.5px solid var(--ink); }
     table.items thead th.c { text-align:center; }
     table.items thead th.l { text-align:left; }
-    table.items tbody td { padding:6px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+    table.items tbody td { padding:4px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
     table.items tbody td.c { text-align:center; }
     table.items tbody td.l { text-align:left; }
     .idx { display:inline-flex; align-items:center; justify-content:center; width:19px; height:19px; border:1px solid var(--bronze); border-radius:50%; font-size:10px; color:var(--bronze); }
-    .it-name { font-weight:600; font-size:13px; }
-    .it-sub { font-size:11.5px; color:var(--bronze); margin-top:1px; }       /* variant subtitle */
-    .it-meta { font-size:10.5px; color:var(--bronze); margin-top:2px; }
+    .prod { display:flex; gap:8px; align-items:flex-start; }
+    .prod-info { flex:1; }
+    .thumb { width:38px; height:38px; object-fit:cover; border:1px solid var(--line); border-radius:4px; background:#fff; flex:none; }
+    .thumb-ph { width:38px; height:38px; border:1px dashed var(--line); border-radius:4px; flex:none; display:flex; align-items:center; justify-content:center; color:var(--bronze); font-size:11px; }
+    .it-name { font-weight:600; font-size:12.5px; }
+    .it-sub { font-size:11px; color:var(--bronze); margin-top:0; }       /* variant subtitle */
+    .it-meta { font-size:10px; color:var(--bronze); margin-top:0; }
     .it-meta b { color:var(--ink); }
     .it-prop { font-size:10.5px; margin-top:3px; padding-right:8px; border-right:2px solid var(--red); }
     .it-qty { font-family:var(--font-display); font-size:16px; font-weight:700; }
 
     /* Summary */
-    .sum-wrap { display:flex; justify-content:space-between; gap:24px; margin-top:8px; flex-wrap:wrap; }
+    .sum-wrap { display:flex; justify-content:space-between; gap:24px; margin-top:5px; flex-wrap:wrap; }
     .note { flex:1; min-width:230px; }
-    .note h4 { font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:4px; }
-    .note p { font-size:11.5px; color:var(--bronze); line-height:1.65; }
+    .note h4 { font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:3px; }
+    .note p { font-size:11.5px; color:var(--bronze); line-height:1.5; }
     .sum { width:270px; }
     .sum .r { display:flex; justify-content:space-between; padding:4px 0; font-size:12.5px; }
     .sum .r .l { color:var(--bronze); }
@@ -134,7 +138,7 @@
     .partial { margin-top:10px; font-size:11px; color:var(--red); border:1px dashed var(--red); border-radius:3px; padding:6px 10px; }
 
     /* Combined end row: scan codes + signature on one line */
-    .endrow { display:flex; gap:22px; align-items:flex-end; margin-top:8px; }
+    .endrow { display:flex; gap:22px; align-items:flex-end; margin-top:5px; }
     .codes { display:flex; gap:18px; align-items:center; border:1px solid var(--line); border-radius:3px; padding:7px 12px; }
     .codes .qr img { width:68px; height:68px; display:block; }
     .codes .bc img { height:36px; max-width:170px; display:block; }
@@ -203,7 +207,7 @@
     <div class="meta-cell">
       <div class="lbl">الدفع · Payment</div>
       <div class="val sm">
-        {% if is_cod %}الدفع عند الاستلام<br/>Cash on Delivery{% else %}الدفع الإلكتروني<br/>Online Payment{% endif %}
+        {% if is_paid %}الدفع الإلكتروني<br/>Online Payment{% else %}الدفع عند الاستلام<br/>Cash on Delivery{% endif %}
       </div>
     </div>
     <div class="meta-cell">
@@ -263,20 +267,47 @@
       {%- assign subtotal_price = 0 -%}
       {%- assign total_pieces = 0 -%}
       {% for line_item in line_items_in_shipment %}
-        {%- comment -%} Match this shipment line back to order.line_items for
-            reliable variant title + price (native slips omit prices). {%- endcomment -%}
+        {%- comment -%} Match this shipment line back to order.line_items for the
+            reliable price/variant. Native slips omit line prices, and for a
+            VARIANT product order.line_items[].title is "Product - Variant" while
+            the shipment title is just "Product" — so we try several keys. {%- endcomment -%}
         {%- assign matched = null -%}
-        {%- for oli in order.line_items -%}
-          {%- if line_item.sku != blank and oli.sku == line_item.sku -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
-        {%- endfor -%}
+        {%- assign ship_title = line_item.title -%}
+        {%- assign ship_variant = line_item.variant_title -%}
+        {%- comment -%} 1) SKU {%- endcomment -%}
+        {%- if line_item.sku != blank -%}
+          {%- for oli in order.line_items -%}
+            {%- if oli.sku == line_item.sku -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+        {%- comment -%} 2) exact title + variant {%- endcomment -%}
         {%- if matched == null -%}
           {%- for oli in order.line_items -%}
-            {%- if oli.title == line_item.title and oli.variant_title == line_item.variant_title -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
+            {%- if oli.title == ship_title and oli.variant_title == ship_variant -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+        {%- comment -%} 3) order product title + variant {%- endcomment -%}
+        {%- if matched == null -%}
+          {%- for oli in order.line_items -%}
+            {%- if oli.product.title == ship_title and oli.variant_title == ship_variant -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+        {%- comment -%} 4) combined order title CONTAINS product title, variant matches {%- endcomment -%}
+        {%- if matched == null -%}
+          {%- for oli in order.line_items -%}
+            {%- if oli.title contains ship_title and oli.variant_title == ship_variant -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+        {%- comment -%} 5) last resort: combined order title CONTAINS product title {%- endcomment -%}
+        {%- if matched == null -%}
+          {%- for oli in order.line_items -%}
+            {%- if oli.title contains ship_title -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
           {%- endfor -%}
         {%- endif -%}
 
+        {%- comment -%} Prefer the clean shipment variant title for display {%- endcomment -%}
         {%- assign v_title = line_item.variant_title -%}
-        {%- if matched %}{% assign v_title = matched.variant_title %}{% endif -%}
+        {%- if v_title == blank and matched %}{% assign v_title = matched.variant_title %}{% endif -%}
         {%- assign sku_val = line_item.sku -%}
         {%- if sku_val == blank and matched %}{% assign sku_val = matched.sku %}{% endif -%}
         {%- assign unit_price = 0 -%}
@@ -288,15 +319,26 @@
         <tr>
           <td class="c"><span class="idx">{{ forloop.index }}</span></td>
           <td>
-            <div class="it-name">{{ line_item.title }}</div>
-            {%- comment -%} Variant subtitle — shown whenever a real variant was bought {%- endcomment -%}
-            {% if v_title != blank and v_title != 'Default Title' %}<div class="it-sub">{{ v_title }}</div>{% endif %}
-            {% if line_item.vendor != blank %}<div class="it-meta"><b>المورّد:</b> {{ line_item.vendor }}</div>{% endif %}
-            {% for prop in line_item.properties %}
-              {% if prop.last != blank and prop.first != blank %}{% unless prop.first == '_' %}
-                <div class="it-prop"><b>{{ prop.first }}:</b> {{ prop.last }}</div>
-              {% endunless %}{% endif %}
-            {% endfor %}
+            <div class="prod">
+              {% if show_images %}
+                {%- comment -%} Product thumbnail. Shipment lines expose line_item.image;
+                    fall back to the matched order line's image. (Legacy app: use
+                    `| img_url: '96x96'` instead of `| image_url: width: 96`.) {%- endcomment -%}
+                {% if line_item.image %}<img class="thumb" src="{{ line_item.image | image_url: width: 96 }}" alt="">
+                {% elsif matched and matched.image %}<img class="thumb" src="{{ matched.image | image_url: width: 96 }}" alt="">
+                {% else %}<div class="thumb-ph">—</div>{% endif %}
+              {% endif %}
+              <div class="prod-info">
+                <div class="it-name">{{ line_item.title }}</div>
+                {% if v_title != blank and v_title != 'Default Title' %}<div class="it-sub">{{ v_title }}</div>{% endif %}
+                {% if line_item.vendor != blank %}<div class="it-meta"><b>المورّد:</b> {{ line_item.vendor }}</div>{% endif %}
+                {% for prop in line_item.properties %}
+                  {% if prop.last != blank and prop.first != blank %}{% unless prop.first == '_' %}
+                    <div class="it-prop"><b>{{ prop.first }}:</b> {{ prop.last }}</div>
+                  {% endunless %}{% endif %}
+                {% endfor %}
+              </div>
+            </div>
           </td>
           <td class="c muted" style="font-size:11px;">{% if sku_val != blank %}{{ sku_val }}{% else %}—{% endif %}</td>
           <td class="c"><span class="it-qty">{{ line_item.shipping_quantity }}</span>{% if line_item.shipping_quantity != line_item.quantity %}<span class="muted" style="font-size:11px;"> / {{ line_item.quantity }}</span>{% endif %}</td>
