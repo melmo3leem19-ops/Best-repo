@@ -5,16 +5,20 @@ identity: the smiling-chef logo, the deep-brown / bronze / cream / fez-red /
 herb-green palette pulled straight from that logo, full RTL Arabic with English
 sub-labels for warehouse staff, and A4 / Letter print optimisation.
 
-Two templates are provided so you can use whichever printing system you prefer:
+Templates are provided so you can use whichever printing system and look you
+prefer. All share the same brand tokens and the same premium feature set (QR
+code, order barcode, pick-&-pack checklist, warehouse notes, signature line,
+returns + customer-care footer).
 
-| File | For | Key advantage |
-|------|-----|---------------|
-| `packing-slip-native.liquid` | **Native Shopify packing slips** (Settings → Shipping and delivery → Packing slips) — this is the system your current template uses | Works with zero extra apps; uses `line_items_in_shipment`, supports partial shipments |
+| File | For | Look / advantage |
+|------|-----|------------------|
+| `packing-slip-native.liquid` | **Native Shopify packing slips** (Settings → Shipping and delivery → Packing slips) | Bold design — dark-brown header, bronze meta strip, zebra product table. Uses `line_items_in_shipment`, supports partial shipments |
+| `packing-slip-editorial.liquid` | **Native Shopify packing slips** | Boutique/editorial design — ivory certificate frame, centred logo crest, Amiri serif, hairline rules, brand colours as fine accents (lighter on toner). Same native variables |
 | `packing-slip-order-printer.liquid` | **Order Printer app** (Apps → Order Printer) | Adds product **image thumbnails**, barcodes, vendor, product type, per-line discounts, and a full financial breakdown the native engine can't render |
 
-Both share the same look, the same brand tokens, and the same premium feature
-set (QR code, order barcode, pick-&-pack checklist, warehouse notes, signature
-line, returns + customer-care footer).
+The two native files are interchangeable — pick the one whose look you prefer
+and paste it into the same packing-slip editor. Previews of each render
+(with sample data) are in `preview/`.
 
 ---
 
