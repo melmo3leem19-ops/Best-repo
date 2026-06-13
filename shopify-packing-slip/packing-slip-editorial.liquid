@@ -1,39 +1,41 @@
 {%- comment -%}
 ================================================================================
-  مطحنة المعلم · AL MOALLEM MILL — PACKING SLIP  ·  "EDITORIAL" DESIGN
+  مطحنة المعلم · AL MOALLEM MILL — PACKING SLIP  ·  "EDITORIAL" (one-page A4)
   Native Shopify packing slip (Settings → Shipping and delivery → Packing slips).
-  A from-scratch, boutique-luxury layout: an ivory certificate frame, a centred
-  logo crest, generous whitespace and hairline rules, with the brand colours
-  (brown / bronze / fez-red / herb-green) used as fine accents. RTL Arabic +
-  English. Optimised for A4 / Letter and friendly to black-and-white printers.
+  RTL Arabic + English. Boutique-luxury layout, A4 / Letter, B&W printer friendly.
 --------------------------------------------------------------------------------
-  Variables come from the NATIVE packing-slip engine only
-  (line_items_in_shipment, shipping_address, billing_address, delivery_method,
-  includes_all_line_items_in_order, order, shop). Customise the SETTINGS block
-  and the :root colours below.
+  PRICES / VARIANTS:
+    Native slips expose only title, variant_title, sku, vendor, quantity,
+    shipping_quantity, properties, groups on `line_items_in_shipment` — NOT
+    prices. So each shipment line is matched back to `order.line_items` (by SKU,
+    then by title + variant) to read the reliable variant title and final_price.
+  PAYMENT:
+    Shows "الدفع عند الاستلام · Cash on Delivery" when the gateway is COD,
+    otherwise "الدفع الإلكتروني · Online Payment".
 ================================================================================
 {%- endcomment -%}
 
 {%- liquid
   assign logo_url = 'https://cdn.shopify.com/s/files/1/0876/0931/1266/files/IMG_8323_3fabdbaa-4a92-471d-b4d9-b5431e4f44be.png'
-  assign store_name_en   = 'Al Moallem Mill'
-  assign store_phone     = '+965 6680 5085'
-  assign store_country   = 'الكويت · Kuwait'
-  # store_tax_number example: 'الرقم الضريبي 0000000000'
-  assign store_tax_number = ''
-  assign support_hours   = 'السبت – الخميس · 9 ص – 9 م'
+  assign store_name_en  = 'Al Moallem Mill'
+  assign store_phone    = '+965 6680 5085'
   # returns_window: free text shown in the returns block
-  assign returns_window  = '٧ أيام'
-  assign brand_tagline   = 'بهارات ومكسّرات مطحونة طازجة · Freshly milled spices & nuts'
+  assign returns_window = '٧ أيام'
 
   assign show_qr        = true
   assign show_barcode   = true
-  assign show_checklist = true
   assign show_signature = true
   assign show_prices    = true
 
-  assign qr_provider      = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=0&data='
+  assign qr_provider      = 'https://api.qrserver.com/v1/create-qr-code/?size=130x130&margin=0&data='
   assign barcode_provider = 'https://barcode.tec-it.com/barcode.ashx?code=Code128&dpi=96&imagetype=Png&data='
+
+  # COD detection from the order's payment gateway name(s)
+  assign gw = order.payment_gateway_names | join: ' ' | downcase
+  assign is_cod = false
+  if gw contains 'cash on delivery' or gw contains 'cod' or gw contains 'الدفع عند'
+    assign is_cod = true
+  endif
 -%}
 
 <!DOCTYPE html>
@@ -42,215 +44,137 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>إيصال الشحن – {{ shop.name }}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
-    /* ─── BRAND TOKENS (from the Al Moallem logo) ─────────────────────── */
     :root {
-      --ink:    #3b2314;   /* deep brown — primary text          */
-      --bronze: #8b5e3c;   /* secondary text / fine rules        */
-      --line:   #d9cdb2;   /* hairline borders                    */
-      --cream:  #f3ead2;   /* soft fill / accents                 */
-      --paper:  #fdfbf5;   /* sheet background                    */
-      --red:    #c0392b;   /* fez red — primary accent            */
-      --green:  #4a6741;   /* herb green — status accent          */
-      --font-body:    'Cairo', sans-serif;
-      --font-display: 'Amiri', serif;
+      --ink:#3b2314; --bronze:#8b5e3c; --line:#d9cdb2; --cream:#f3ead2;
+      --paper:#fdfbf5; --red:#c0392b; --green:#4a6741;
+      --font-body:'Cairo',sans-serif; --font-display:'Amiri',serif;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    @page { size: A4; margin: 12mm; }
+    @page { size: A4; margin: 10mm; }
 
     body {
-      background: #e7ddc6;
-      font-family: var(--font-body);
-      color: var(--ink);
-      font-size: 12.5px; line-height: 1.55;
-      padding: 28px 16px 56px;
-      display: flex; justify-content: center;
-      direction: rtl;
-      -webkit-font-smoothing: antialiased;
+      background:#e7ddc6; font-family:var(--font-body); color:var(--ink);
+      font-size:12px; line-height:1.45; padding:10px 14px 24px;
+      display:flex; justify-content:center; direction:rtl; -webkit-font-smoothing:antialiased;
     }
-
-    /* ─── CERTIFICATE FRAME ───────────────────────────────────────────── */
     .sheet {
-      width: 760px; max-width: 100%;
-      background: var(--paper);
-      padding: 30px 38px 26px;
-      position: relative;
-      box-shadow: 0 10px 50px rgba(59,35,20,.22);
+      width:760px; max-width:100%; background:var(--paper);
+      padding:16px 30px 14px; position:relative; box-shadow:0 10px 50px rgba(59,35,20,.22);
     }
-    .sheet::before {                 /* fine inner double-rule frame */
-      content: ''; position: absolute; inset: 9px;
-      border: 1px solid var(--bronze); opacity: .55; pointer-events: none;
-    }
-    .sheet > * { position: relative; }
+    .sheet::before { content:''; position:absolute; inset:8px; border:1px solid var(--bronze); opacity:.55; pointer-events:none; }
+    .sheet > * { position:relative; }
+    .muted { color:var(--bronze); }
+    .eyebrow { font-size:9px; letter-spacing:.26em; text-transform:uppercase; color:var(--red); font-weight:700; }
 
-    .center { text-align: center; }
-    .muted  { color: var(--bronze); }
-    .eyebrow { font-size: 9.5px; letter-spacing: .28em; text-transform: uppercase; color: var(--red); font-weight: 700; }
-
-    /* ─── 1. CREST HEADER ─────────────────────────────────────────────── */
-    .crest { text-align: center; padding: 6px 0 14px; }
-    .crest .logo-wrap { display: inline-block; position: relative; }
-    .crest .logo {
-      width: 92px; height: 92px; object-fit: contain; border-radius: 50%;
-      border: 1.5px solid var(--bronze); padding: 5px; background: #fff;
-    }
-    .crest .logo-fallback {
-      width: 92px; height: 92px; border-radius: 50%; border: 1.5px solid var(--bronze);
-      background: var(--cream); display: none; align-items: center; justify-content: center;
-      font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--red);
-    }
-    .crest .name-ar { font-family: var(--font-display); font-size: 32px; font-weight: 700; margin-top: 10px; letter-spacing: .02em; }
-    .crest .name-en { font-size: 11px; letter-spacing: .42em; text-transform: uppercase; color: var(--bronze); margin-top: 3px; }
-    .crest .tagline { font-family: var(--font-display); font-style: italic; font-size: 13px; color: var(--bronze); margin-top: 6px; }
-    .crest .contact { font-size: 10.5px; color: var(--bronze); margin-top: 8px; letter-spacing: .02em; }
+    /* Crest */
+    .crest { text-align:center; padding:0 0 2px; }
+    .crest .logo-wrap { display:inline-block; position:relative; }
+    .crest .logo { width:62px; height:62px; object-fit:contain; border-radius:50%; border:1.5px solid var(--bronze); padding:3px; background:#fff; }
+    .crest .logo-fallback { width:62px; height:62px; border-radius:50%; border:1.5px solid var(--bronze); background:var(--cream); display:none; align-items:center; justify-content:center; font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--red); }
+    .crest .name-ar { font-family:var(--font-display); font-size:24px; font-weight:700; margin-top:4px; }
+    .crest .name-en { font-size:9.5px; letter-spacing:.4em; text-transform:uppercase; color:var(--bronze); margin-top:1px; }
 
     /* Diamond rule */
-    .rule { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
-    .rule::before, .rule::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-    .rule .dot { width: 7px; height: 7px; background: var(--red); transform: rotate(45deg); opacity: .85; }
-    .rule .dot.sm { width: 4px; height: 4px; background: var(--bronze); }
+    .rule { display:flex; align-items:center; gap:10px; margin:6px 0; }
+    .rule::before, .rule::after { content:''; flex:1; height:1px; background:var(--line); }
+    .rule .dot { width:6px; height:6px; background:var(--red); transform:rotate(45deg); opacity:.85; }
+    .rule .dot.sm { width:4px; height:4px; background:var(--bronze); }
+    .doc-title { font-family:var(--font-display); font-size:19px; letter-spacing:.1em; text-transform:uppercase; }
 
-    .doc-title { font-family: var(--font-display); font-size: 21px; letter-spacing: .12em; text-transform: uppercase; }
+    /* Meta band */
+    .meta-band { display:flex; border:1px solid var(--line); border-radius:3px; overflow:hidden; background:#fff; }
+    .meta-cell { flex:1; padding:6px 9px; text-align:center; }
+    .meta-cell + .meta-cell { border-right:1px solid var(--line); }
+    .meta-cell .lbl { font-size:8px; letter-spacing:.12em; text-transform:uppercase; color:var(--bronze); }
+    .meta-cell .val { font-size:13px; font-weight:700; margin-top:2px; }
+    .meta-cell .val.sm { font-size:10.5px; line-height:1.3; }
+    .meta-cell .val.red { color:var(--red); }
+    .status-tag { display:inline-block; margin-top:3px; font-size:9.5px; font-weight:700; color:var(--green); border:1px solid var(--green); border-radius:999px; padding:1px 9px; }
 
-    /* ─── 2. META BAND ────────────────────────────────────────────────── */
-    .meta-band {
-      display: flex; border: 1px solid var(--line); border-radius: 3px; overflow: hidden;
-      margin-top: 4px; background: #fff;
-    }
-    .meta-cell { flex: 1; padding: 9px 12px; text-align: center; }
-    .meta-cell + .meta-cell { border-right: 1px solid var(--line); }
-    .meta-cell .lbl { font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--bronze); }
-    .meta-cell .val { font-size: 14px; font-weight: 700; margin-top: 2px; }
-    .meta-cell .val.red { color: var(--red); }
-    .status-tag {
-      display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 700;
-      letter-spacing: .05em; color: var(--green); border: 1px solid var(--green);
-      border-radius: 999px; padding: 1px 10px;
-    }
+    /* Addresses (Delivery + Ship To) */
+    .addr-grid { display:grid; grid-template-columns:1fr 1fr; margin-top:8px; }
+    .addr { padding:0 16px; }
+    .addr + .addr { border-right:1px solid var(--line); }
+    .addr h3 { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--red); margin-bottom:6px; font-weight:700; }
+    .addr .nm { font-weight:700; font-size:13px; }
+    .addr .ln { font-size:12px; }
+    .addr .sub { font-size:11px; color:var(--bronze); }
 
-    /* ─── 3. ADDRESSES ────────────────────────────────────────────────── */
-    .addr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; margin-top: 18px; }
-    .addr { padding: 0 16px; }
-    .addr + .addr { border-right: 1px solid var(--line); }
-    .addr h3 { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--red); margin-bottom: 7px; font-weight: 700; }
-    .addr .nm { font-weight: 700; font-size: 13.5px; }
-    .addr .ln { font-size: 12px; }
-    .addr .sub { font-size: 11px; color: var(--bronze); }
+    /* Items */
+    table.items { width:100%; border-collapse:collapse; }
+    table.items thead th { font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--bronze); font-weight:700; text-align:right; padding:0 9px 5px; border-bottom:1.5px solid var(--ink); }
+    table.items thead th.c { text-align:center; }
+    table.items thead th.l { text-align:left; }
+    table.items tbody td { padding:6px 9px; border-bottom:1px solid var(--line); vertical-align:top; }
+    table.items tbody td.c { text-align:center; }
+    table.items tbody td.l { text-align:left; }
+    .idx { display:inline-flex; align-items:center; justify-content:center; width:19px; height:19px; border:1px solid var(--bronze); border-radius:50%; font-size:10px; color:var(--bronze); }
+    .it-name { font-weight:600; font-size:13px; }
+    .it-sub { font-size:11.5px; color:var(--bronze); margin-top:1px; }       /* variant subtitle */
+    .it-meta { font-size:10.5px; color:var(--bronze); margin-top:2px; }
+    .it-meta b { color:var(--ink); }
+    .it-prop { font-size:10.5px; margin-top:3px; padding-right:8px; border-right:2px solid var(--red); }
+    .it-qty { font-family:var(--font-display); font-size:16px; font-weight:700; }
 
-    /* ─── 4. ITEMS ────────────────────────────────────────────────────── */
-    .items-head { margin: 22px 0 0; }
-    table.items { width: 100%; border-collapse: collapse; }
-    table.items thead th {
-      font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--bronze);
-      font-weight: 700; text-align: right; padding: 0 10px 8px; border-bottom: 1.5px solid var(--ink);
-    }
-    table.items thead th.c { text-align: center; }
-    table.items thead th.l { text-align: left; }
-    table.items tbody td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    table.items tbody td.c { text-align: center; }
-    table.items tbody td.l { text-align: left; }
-    .idx { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
-           border: 1px solid var(--bronze); border-radius: 50%; font-size: 10px; color: var(--bronze); }
-    .it-name { font-weight: 600; font-size: 13px; }
-    .it-variant { display: inline-block; font-size: 10.5px; color: var(--bronze); border: 1px solid var(--line);
-                  border-radius: 999px; padding: 1px 8px; margin-top: 3px; }
-    .it-meta { font-size: 10.5px; color: var(--bronze); margin-top: 3px; }
-    .it-meta b { color: var(--ink); }
-    .it-prop { font-size: 10.5px; margin-top: 4px; padding-right: 8px; border-right: 2px solid var(--red); }
-    .it-qty { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
-    .grp { font-size: 10.5px; color: var(--bronze); }
+    /* Summary */
+    .sum-wrap { display:flex; justify-content:space-between; gap:24px; margin-top:8px; flex-wrap:wrap; }
+    .note { flex:1; min-width:230px; }
+    .note h4 { font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:4px; }
+    .note p { font-size:11.5px; color:var(--bronze); line-height:1.65; }
+    .sum { width:270px; }
+    .sum .r { display:flex; justify-content:space-between; padding:4px 0; font-size:12.5px; }
+    .sum .r .l { color:var(--bronze); }
+    .sum .r .v { font-weight:600; }
+    .sum .r.disc .v { color:var(--green); }
+    .sum .grand { display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; padding-top:9px; border-top:1.5px solid var(--ink); }
+    .sum .grand .l { font-family:var(--font-display); font-size:15px; font-weight:700; }
+    .sum .grand .v { font-family:var(--font-display); font-size:21px; font-weight:700; color:var(--red); }
+    .partial { margin-top:10px; font-size:11px; color:var(--red); border:1px dashed var(--red); border-radius:3px; padding:6px 10px; }
 
-    /* ─── 5. SUMMARY + NOTE ───────────────────────────────────────────── */
-    .sum-wrap { display: flex; justify-content: space-between; gap: 26px; margin-top: 16px; flex-wrap: wrap; }
-    .note { flex: 1; min-width: 240px; }
-    .note h4 { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--red); margin-bottom: 5px; }
-    .note p { font-size: 11.5px; color: var(--bronze); line-height: 1.7; }
-    .sum { width: 280px; }
-    .sum .r { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12.5px; }
-    .sum .r .l { color: var(--bronze); }
-    .sum .r .v { font-weight: 600; }
-    .sum .r.disc .v { color: var(--green); }
-    .sum .grand {
-      display: flex; justify-content: space-between; align-items: baseline;
-      margin-top: 8px; padding-top: 10px; border-top: 1.5px solid var(--ink);
-    }
-    .sum .grand .l { font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: .04em; }
-    .sum .grand .v { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--red); }
+    /* Combined end row: scan codes + signature on one line */
+    .endrow { display:flex; gap:22px; align-items:flex-end; margin-top:8px; }
+    .codes { display:flex; gap:18px; align-items:center; border:1px solid var(--line); border-radius:3px; padding:7px 12px; }
+    .codes .qr img { width:68px; height:68px; display:block; }
+    .codes .bc img { height:36px; max-width:170px; display:block; }
+    .codes .cap { font-size:8px; letter-spacing:.08em; text-transform:uppercase; color:var(--bronze); margin-top:3px; text-align:center; }
+    .signs { flex:1; display:flex; gap:20px; }
+    .signs .s { flex:1; }
+    .signs .s .line { border-bottom:1px solid var(--ink); height:26px; }
+    .signs .s .lbl { font-size:9.5px; color:var(--bronze); margin-top:3px; }
 
-    .partial { margin-top: 12px; font-size: 11.5px; color: var(--red); border: 1px dashed var(--red); border-radius: 3px; padding: 7px 12px; }
+    /* Returns */
+    .returns { margin-top:7px; border-top:1px solid var(--line); padding-top:6px; }
+    .returns h4 { font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--red); margin-bottom:3px; }
+    .returns p { font-size:10.5px; line-height:1.45; }
 
-    /* ─── 6. OPS: checklist | codes ───────────────────────────────────── */
-    .ops { display: grid; grid-template-columns: 1fr 250px; gap: 0; margin-top: 8px;
-           border: 1px solid var(--line); border-radius: 3px; }
-    .ops .cell { padding: 14px 18px; }
-    .ops .cell + .cell { border-right: 1px solid var(--line); }
-    .ops h4 { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--bronze); margin-bottom: 10px; }
-    .ck { display: flex; align-items: center; gap: 9px; font-size: 11.5px; padding: 4px 0; }
-    .ck .box { width: 14px; height: 14px; border: 1.4px solid var(--ink); border-radius: 2px; flex: none; }
-    .wh-lines { margin-top: 8px; }
-    .wh-lines .l { height: 20px; border-bottom: 1px dotted var(--bronze); }
-    .codes { text-align: center; }
-    .codes .qr img { width: 116px; height: 116px; }
-    .codes .bc img { height: 50px; max-width: 210px; margin-top: 12px; }
-    .codes .cap { font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze); margin-top: 4px; }
+    /* Footer */
+    .foot { text-align:center; margin-top:6px; }
+    .foot .thanks { font-family:var(--font-display); font-style:italic; font-size:16px; color:var(--ink); }
+    .foot .links { font-size:10px; color:var(--bronze); margin-top:3px; }
 
-    /* ─── 7. SIGNATURE ────────────────────────────────────────────────── */
-    .sign { display: flex; gap: 28px; margin-top: 22px; }
-    .sign .s { flex: 1; }
-    .sign .s .line { border-bottom: 1px solid var(--ink); height: 30px; }
-    .sign .s .lbl { font-size: 9.5px; letter-spacing: .04em; color: var(--bronze); margin-top: 5px; }
-
-    /* ─── 8. POLICY ───────────────────────────────────────────────────── */
-    .policy { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 18px;
-              border-top: 1px solid var(--line); padding-top: 14px; }
-    .policy .p { padding: 0 16px; }
-    .policy .p + .p { border-right: 1px solid var(--line); }
-    .policy h4 { font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--red); margin-bottom: 5px; }
-    .policy p { font-size: 11px; color: var(--ink); line-height: 1.65; }
-
-    /* ─── 9. FOOTER ───────────────────────────────────────────────────── */
-    .foot { text-align: center; margin-top: 18px; }
-    .foot .thanks { font-family: var(--font-display); font-style: italic; font-size: 18px; color: var(--ink); }
-    .foot .links { font-size: 10.5px; color: var(--bronze); letter-spacing: .04em; margin-top: 5px; }
-
-    /* ─── PRINT (A4/Letter; keep accents, stays legible in greyscale) ─── */
     @media print {
-      body { background: #fff; padding: 0; }
-      .sheet { width: 100%; box-shadow: none; }
+      body { background:#fff; padding:0; }
+      .sheet { width:100%; box-shadow:none; }
       .status-tag, .meta-band, .it-prop, .partial, .sum .grand .v, .codes img {
-        -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        -webkit-print-color-adjust:exact; print-color-adjust:exact;
       }
-      .ops, .sign, .policy, .foot, .sum-wrap { page-break-inside: avoid; }
-      tr { page-break-inside: avoid; }
+      .endrow, .returns, .foot, .sum-wrap { page-break-inside:avoid; }
+      tr { page-break-inside:avoid; }
     }
-    @media (max-width: 800px) {
-      body { padding: 0; } .sheet { width: 100%; }
-      .addr-grid, .ops, .policy { grid-template-columns: 1fr; }
-      .addr + .addr, .ops .cell + .cell, .policy .p + .p { border-right: none; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+    @media (max-width:800px) {
+      body { padding:0; } .sheet { width:100%; }
+      .addr-grid { grid-template-columns:1fr; }
+      .addr + .addr { border-right:none; border-top:1px solid var(--line); padding-top:10px; margin-top:10px; }
+      .endrow { flex-wrap:wrap; }
     }
   </style>
 </head>
 <body>
-
-{%- comment -%} ===== Pre-compute shipment totals ===== {%- endcomment -%}
-{% assign total_pieces = 0 %}
-{% assign subtotal_price = 0 %}
-{% for line_item in line_items_in_shipment %}
-  {% assign total_pieces = total_pieces | plus: line_item.shipping_quantity %}
-  {% if line_item.line_price %}
-    {% assign subtotal_price = subtotal_price | plus: line_item.line_price %}
-  {% else %}
-    {% assign line_total = line_item.price | times: line_item.shipping_quantity %}
-    {% assign subtotal_price = subtotal_price | plus: line_total %}
-  {% endif %}
-{% endfor %}
-{% assign total_line_items = line_items_in_shipment | size %}
-
 <div class="sheet">
 
-  <!-- ░░ 1. CREST HEADER ░░ -->
+  <!-- 1. CREST (logo + names only) -->
   <div class="crest">
     <span class="logo-wrap">
       <img class="logo" src="{{ logo_url }}" alt="{{ shop.name }}"
@@ -259,19 +183,14 @@
     </span>
     <div class="name-ar">{{ shop.name }}</div>
     <div class="name-en">{{ store_name_en }}</div>
-    {% if brand_tagline != blank %}<div class="tagline">{{ brand_tagline }}</div>{% endif %}
-    <div class="contact">
-      {{ shop.domain }} &nbsp;·&nbsp; {{ store_phone }} &nbsp;·&nbsp; {{ store_country }}
-      {% if store_tax_number != blank %}<br/>{{ store_tax_number }}{% endif %}
-    </div>
   </div>
 
-  <!-- ░░ TITLE RULE ░░ -->
+  <!-- Title rule -->
   <div class="rule"><span class="dot sm"></span><span class="dot"></span>
     <span class="doc-title">إيصال الشحن · Packing Slip</span>
     <span class="dot"></span><span class="dot sm"></span></div>
 
-  <!-- ░░ 2. META BAND: order / date / payment / status ░░ -->
+  <!-- 2. META BAND -->
   <div class="meta-band">
     <div class="meta-cell">
       <div class="lbl">رقم الطلب · Order</div>
@@ -282,12 +201,10 @@
       <div class="val">{{ order.created_at | date: "%d %B %Y" }}</div>
     </div>
     <div class="meta-cell">
-      <div class="lbl">طريقة الدفع · Payment</div>
-      <div class="val">{% if order.payment_gateway_names != blank %}{{ order.payment_gateway_names | join: ", " }}{% else %}—{% endif %}</div>
-    </div>
-    <div class="meta-cell">
-      <div class="lbl">القطع · Pieces</div>
-      <div class="val">{{ total_pieces }}</div>
+      <div class="lbl">الدفع · Payment</div>
+      <div class="val sm">
+        {% if is_cod %}الدفع عند الاستلام<br/>Cash on Delivery{% else %}الدفع الإلكتروني<br/>Online Payment{% endif %}
+      </div>
     </div>
     <div class="meta-cell">
       <div class="lbl">الحالة · Status</div>
@@ -302,7 +219,7 @@
     </div>
   </div>
 
-  <!-- ░░ 3. ADDRESSES: order/delivery · ship to · bill to ░░ -->
+  <!-- 3. ADDRESSES: Delivery + Ship To -->
   <div class="addr-grid">
     <div class="addr">
       <h3>التوصيل · Delivery</h3>
@@ -322,61 +239,72 @@
         <div class="ln">{{ shipping_address.country }}</div>
       {% else %}<div class="sub">—</div>{% endif %}
     </div>
-    <div class="addr">
-      <h3>عنوان الفوترة · Bill To</h3>
-      {% if billing_address != blank %}
-        <div class="nm">{{ billing_address.name }}</div>
-        {% if billing_address.company != blank %}<div class="ln">{{ billing_address.company }}</div>{% endif %}
-        <div class="ln">{{ billing_address.address1 }}</div>
-        {% if billing_address.address2 != blank %}<div class="ln">{{ billing_address.address2 }}</div>{% endif %}
-        {% if billing_address.city_province_zip != blank %}<div class="ln">{{ billing_address.city_province_zip }}</div>{% endif %}
-        <div class="ln">{{ billing_address.country }}</div>
-      {% else %}<div class="sub">نفس عنوان الشحن · Same as shipping</div>{% endif %}
-    </div>
   </div>
 
-  <!-- ░░ 4. ITEMS ░░ -->
-  <div class="rule items-head"><span class="dot sm"></span>
+  <!-- 4. ITEMS -->
+  <div class="rule"><span class="dot sm"></span>
     <span class="eyebrow">المنتجات المشحونة · Items in this shipment</span>
     <span class="dot sm"></span></div>
 
   <table class="items">
     <thead>
       <tr>
-        <th class="c" style="width:30px;">#</th>
+        <th class="c" style="width:28px;">#</th>
         <th>المنتج · Product</th>
-        <th class="c" style="width:110px;">SKU</th>
-        <th class="c" style="width:60px;">الكمية · Qty</th>
+        <th class="c" style="width:100px;">SKU</th>
+        <th class="c" style="width:52px;">الكمية · Qty</th>
         {% if show_prices %}
-          <th class="l" style="width:80px;">الوحدة · Unit</th>
-          <th class="l" style="width:90px;">الإجمالي · Total</th>
+          <th class="l" style="width:78px;">الوحدة · Unit</th>
+          <th class="l" style="width:88px;">الإجمالي · Total</th>
         {% endif %}
       </tr>
     </thead>
     <tbody>
+      {%- assign subtotal_price = 0 -%}
+      {%- assign total_pieces = 0 -%}
       {% for line_item in line_items_in_shipment %}
-      <tr>
-        <td class="c"><span class="idx">{{ forloop.index }}</span></td>
-        <td>
-          <div class="it-name">{{ line_item.title }}</div>
-          {% if line_item.variant_title != blank %}<span class="it-variant">{{ line_item.variant_title }}</span>{% endif %}
-          {% if line_item.vendor != blank %}<div class="it-meta"><b>المورّد:</b> {{ line_item.vendor }}</div>{% endif %}
-          {% for prop in line_item.properties %}
-            {% if prop.last != blank and prop.first != blank %}{% unless prop.first == '_' %}
-              <div class="it-prop"><b>{{ prop.first }}:</b> {{ prop.last }}</div>
-            {% endunless %}{% endif %}
-          {% endfor %}
-          {% for group in line_item.groups %}
-            <div class="grp">{% if group.deliverable? %}↳ لـ: {{ group.title }}{% else %}↳ جزء من: {{ group.title }}{% endif %}</div>
-          {% endfor %}
-        </td>
-        <td class="c muted" style="font-size:11px;">{% if line_item.sku != blank %}{{ line_item.sku }}{% else %}—{% endif %}</td>
-        <td class="c"><span class="it-qty">{{ line_item.shipping_quantity }}</span>{% if line_item.shipping_quantity != line_item.quantity %}<span class="muted" style="font-size:11px;"> / {{ line_item.quantity }}</span>{% endif %}</td>
-        {% if show_prices %}
-          <td class="l">{{ line_item.price | money }}</td>
-          <td class="l" style="font-weight:700;">{% if line_item.line_price %}{{ line_item.line_price | money }}{% else %}{{ line_item.price | times: line_item.shipping_quantity | money }}{% endif %}</td>
-        {% endif %}
-      </tr>
+        {%- comment -%} Match this shipment line back to order.line_items for
+            reliable variant title + price (native slips omit prices). {%- endcomment -%}
+        {%- assign matched = null -%}
+        {%- for oli in order.line_items -%}
+          {%- if line_item.sku != blank and oli.sku == line_item.sku -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
+        {%- endfor -%}
+        {%- if matched == null -%}
+          {%- for oli in order.line_items -%}
+            {%- if oli.title == line_item.title and oli.variant_title == line_item.variant_title -%}{%- assign matched = oli -%}{%- break -%}{%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+
+        {%- assign v_title = line_item.variant_title -%}
+        {%- if matched %}{% assign v_title = matched.variant_title %}{% endif -%}
+        {%- assign sku_val = line_item.sku -%}
+        {%- if sku_val == blank and matched %}{% assign sku_val = matched.sku %}{% endif -%}
+        {%- assign unit_price = 0 -%}
+        {%- if matched %}{% assign unit_price = matched.final_price %}{% endif -%}
+        {%- assign line_total = unit_price | times: line_item.shipping_quantity -%}
+        {%- assign subtotal_price = subtotal_price | plus: line_total -%}
+        {%- assign total_pieces = total_pieces | plus: line_item.shipping_quantity -%}
+
+        <tr>
+          <td class="c"><span class="idx">{{ forloop.index }}</span></td>
+          <td>
+            <div class="it-name">{{ line_item.title }}</div>
+            {%- comment -%} Variant subtitle — shown whenever a real variant was bought {%- endcomment -%}
+            {% if v_title != blank and v_title != 'Default Title' %}<div class="it-sub">{{ v_title }}</div>{% endif %}
+            {% if line_item.vendor != blank %}<div class="it-meta"><b>المورّد:</b> {{ line_item.vendor }}</div>{% endif %}
+            {% for prop in line_item.properties %}
+              {% if prop.last != blank and prop.first != blank %}{% unless prop.first == '_' %}
+                <div class="it-prop"><b>{{ prop.first }}:</b> {{ prop.last }}</div>
+              {% endunless %}{% endif %}
+            {% endfor %}
+          </td>
+          <td class="c muted" style="font-size:11px;">{% if sku_val != blank %}{{ sku_val }}{% else %}—{% endif %}</td>
+          <td class="c"><span class="it-qty">{{ line_item.shipping_quantity }}</span>{% if line_item.shipping_quantity != line_item.quantity %}<span class="muted" style="font-size:11px;"> / {{ line_item.quantity }}</span>{% endif %}</td>
+          {% if show_prices %}
+            <td class="l">{% if matched %}{{ unit_price | money }}{% else %}—{% endif %}</td>
+            <td class="l" style="font-weight:700;">{% if matched %}{{ line_total | money }}{% else %}—{% endif %}</td>
+          {% endif %}
+        </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -385,76 +313,50 @@
     <div class="partial">⚠ بعض عناصر طلبك ستصل في شحنة منفصلة · Some items ship separately.</div>
   {% endunless %}
 
-  <!-- ░░ 5. SUMMARY + NOTE ░░ -->
+  <!-- 5. SUMMARY + NOTE -->
   <div class="sum-wrap">
     <div class="note">
       <h4>ملاحظات · Notes</h4>
-      <p>
-        {% if order.note != blank %}{{ order.note }}{% else %}يُرجى التحقق من سلامة المنتجات عند الاستلام. لأي استفسار تواصلوا معنا خلال 24 ساعة.{% endif %}
-      </p>
+      <p>{% if order.note != blank %}{{ order.note }}{% else %}يُرجى التحقق من سلامة المنتجات عند الاستلام.{% endif %}</p>
     </div>
     {% if show_prices %}
     <div class="sum">
       <div class="r"><span class="l">المجموع الفرعي · Subtotal</span><span class="v">{{ subtotal_price | money }}</span></div>
       {% if order.total_discounts > 0 %}<div class="r disc"><span class="l">الخصم · Discount</span><span class="v">– {{ order.total_discounts | money }}</span></div>{% endif %}
       {% if order.shipping_price > 0 %}<div class="r"><span class="l">التوصيل · Shipping</span><span class="v">{{ order.shipping_price | money }}</span></div>{% endif %}
-      {% if order.tax_price > 0 %}<div class="r"><span class="l">الضريبة · Tax</span><span class="v">{{ order.tax_price | money }}</span></div>{% endif %}
-      <div class="grand"><span class="l">الإجمالي · Total</span><span class="v">{{ order.total_price | money }}</span></div>
+      <div class="grand"><span class="l">الإجمالي · Total</span><span class="v">{% if order.total_price %}{{ order.total_price | money }}{% else %}{{ subtotal_price | money }}{% endif %}</span></div>
     </div>
     {% endif %}
   </div>
 
-  <!-- ░░ 6. OPERATIONS: checklist | scan codes ░░ -->
-  <div class="rule"><span class="dot sm"></span><span class="dot sm"></span></div>
-  <div class="ops">
-    {% if show_checklist %}
-    <div class="cell">
-      <h4>قائمة التجهيز والتغليف · Pick &amp; Pack Checklist</h4>
-      <div class="ck"><span class="box"></span> تجهيز الأصناف ومطابقة الكميات · Items picked &amp; verified</div>
-      <div class="ck"><span class="box"></span> فحص الجودة والحالة · Quality &amp; condition checked</div>
-      <div class="ck"><span class="box"></span> تغليف وحماية المنتجات · Packed &amp; protected</div>
-      <div class="ck"><span class="box"></span> إرفاق إيصال الشحن · Packing slip enclosed</div>
-      <div class="ck"><span class="box"></span> إغلاق الطرد ولصق العنوان · Sealed &amp; labelled</div>
-      <h4 style="margin-top:12px;">ملاحظات المستودع · Warehouse Notes</h4>
-      <div class="wh-lines"><div class="l"></div><div class="l"></div></div>
-      <div class="muted" style="font-size:10.5px; margin-top:6px;">تم التجهيز بواسطة · Packed by ________ التاريخ ________</div>
-    </div>
-    {% endif %}
+  <!-- 6. END ROW: scan codes (QR + barcode) + signature on one line -->
+  <div class="endrow">
     {% if show_qr or show_barcode %}
-    <div class="cell codes">
-      <h4 style="text-align:center;">المسح والتتبع · Scan</h4>
+    <div class="codes">
       {% if show_qr %}
         {% capture qr_data %}{{ order.name }} | {{ shipping_address.name }} | {{ order.created_at | date: "%Y-%m-%d" }} | {{ total_pieces }} pcs{% endcapture %}
-        <div class="qr"><img src="{{ qr_provider }}{{ qr_data | url_encode }}" alt="QR {{ order.name }}"><div class="cap">ملخص الطلب · Summary</div></div>
+        <div class="qr"><img src="{{ qr_provider }}{{ qr_data | url_encode }}" alt="QR {{ order.name }}"><div class="cap">ملخص · Summary</div></div>
       {% endif %}
       {% if show_barcode %}
         <div class="bc"><img src="{{ barcode_provider }}{{ order.name | url_encode }}" alt="Barcode {{ order.name }}"><div class="cap">{{ order.name }}</div></div>
       {% endif %}
     </div>
     {% endif %}
-  </div>
-
-  {% if show_signature %}
-  <!-- ░░ 7. SIGNATURE ░░ -->
-  <div class="sign">
-    <div class="s"><div class="line"></div><div class="lbl">توقيع المستلم · Received by (signature)</div></div>
-    <div class="s" style="max-width:170px;"><div class="line"></div><div class="lbl">التاريخ · Date</div></div>
-  </div>
-  {% endif %}
-
-  <!-- ░░ 8. POLICY ░░ -->
-  <div class="policy">
-    <div class="p">
-      <h4>الإرجاع والاستبدال · Returns &amp; Exchanges</h4>
-      <p>يمكن إرجاع المنتجات غير المستخدمة خلال {{ returns_window }} من الاستلام مع الاحتفاظ بهذا الإيصال.<br/>Unused items may be returned within {{ returns_window }} of delivery — keep this slip.</p>
+    {% if show_signature %}
+    <div class="signs">
+      <div class="s"><div class="line"></div><div class="lbl">توقيع المستلم · Received by</div></div>
+      <div class="s" style="max-width:150px;"><div class="line"></div><div class="lbl">التاريخ · Date</div></div>
     </div>
-    <div class="p">
-      <h4>خدمة العملاء · Customer Care</h4>
-      <p>📞 {{ store_phone }} &nbsp;·&nbsp; ✉ {{ shop.email }}<br/>🕑 {{ support_hours }}</p>
-    </div>
+    {% endif %}
   </div>
 
-  <!-- ░░ 9. FOOTER ░░ -->
+  <!-- 8. RETURNS -->
+  <div class="returns">
+    <h4>الإرجاع والاستبدال · Returns &amp; Exchanges</h4>
+    <p>يمكن إرجاع المنتجات غير المستخدمة خلال {{ returns_window }} من الاستلام مع الاحتفاظ بهذا الإيصال.<br/>Unused items may be returned within {{ returns_window }} of delivery — please keep this slip.</p>
+  </div>
+
+  <!-- 9. FOOTER -->
   <div class="rule"><span class="dot sm"></span><span class="dot"></span><span class="dot sm"></span></div>
   <div class="foot">
     <div class="thanks">شكراً لثقتكم بـ{{ shop.name }} ✦</div>

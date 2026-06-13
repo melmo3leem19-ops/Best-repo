@@ -13,7 +13,7 @@ returns + customer-care footer).
 | File | For | Look / advantage |
 |------|-----|------------------|
 | `packing-slip-native.liquid` | **Native Shopify packing slips** (Settings → Shipping and delivery → Packing slips) | Bold design — dark-brown header, bronze meta strip, zebra product table. Uses `line_items_in_shipment`, supports partial shipments |
-| `packing-slip-editorial.liquid` | **Native Shopify packing slips** | Boutique/editorial design — ivory certificate frame, centred logo crest, Amiri serif, hairline rules, brand colours as fine accents (lighter on toner). Same native variables |
+| `packing-slip-editorial.liquid` | **Native Shopify packing slips** | Boutique/editorial design tuned to **one A4 page** — ivory certificate frame, centred logo crest, Amiri serif, hairline rules. Shows the variant subtitle and per-line **prices** by matching each shipment line back to `order.line_items` (native slips omit prices), and prints **COD vs Online Payment** automatically. No Bill-To / checklist / warehouse-notes / customer-care blocks |
 | `packing-slip-order-printer.liquid` | **Order Printer app** (Apps → Order Printer) | Adds product **image thumbnails**, barcodes, vendor, product type, per-line discounts, and a full financial breakdown the native engine can't render |
 
 The two native files are interchangeable — pick the one whose look you prefer
