@@ -19,8 +19,7 @@
   assign logo_url = 'https://cdn.shopify.com/s/files/1/0876/0931/1266/files/IMG_8323_3fabdbaa-4a92-471d-b4d9-b5431e4f44be.png'
   assign store_name_en  = 'Al Moallem Mill'
   assign store_phone    = '+965 6680 5085'
-  # returns_window: free text shown in the returns block
-  assign returns_window = '٧ أيام'
+  assign store_instagram = '@m.elmo3leem'
 
   assign show_qr        = true
   assign show_barcode   = true
@@ -255,8 +254,7 @@
       <tr>
         <th class="c" style="width:28px;">#</th>
         <th>المنتج · Product</th>
-        <th class="c" style="width:100px;">SKU</th>
-        <th class="c" style="width:52px;">الكمية · Qty</th>
+        <th class="c" style="width:56px;">الكمية · Qty</th>
         {% if show_prices %}
           <th class="l" style="width:78px;">الوحدة · Unit</th>
           <th class="l" style="width:88px;">الإجمالي · Total</th>
@@ -308,8 +306,6 @@
         {%- comment -%} Prefer the clean shipment variant title for display {%- endcomment -%}
         {%- assign v_title = line_item.variant_title -%}
         {%- if v_title == blank and matched %}{% assign v_title = matched.variant_title %}{% endif -%}
-        {%- assign sku_val = line_item.sku -%}
-        {%- if sku_val == blank and matched %}{% assign sku_val = matched.sku %}{% endif -%}
         {%- assign unit_price = 0 -%}
         {%- if matched %}{% assign unit_price = matched.final_price %}{% endif -%}
         {%- assign line_total = unit_price | times: line_item.shipping_quantity -%}
@@ -331,7 +327,6 @@
               <div class="prod-info">
                 <div class="it-name">{{ line_item.title }}</div>
                 {% if v_title != blank and v_title != 'Default Title' %}<div class="it-sub">{{ v_title }}</div>{% endif %}
-                {% if line_item.vendor != blank %}<div class="it-meta"><b>المورّد:</b> {{ line_item.vendor }}</div>{% endif %}
                 {% for prop in line_item.properties %}
                   {% if prop.last != blank and prop.first != blank %}{% unless prop.first == '_' %}
                     <div class="it-prop"><b>{{ prop.first }}:</b> {{ prop.last }}</div>
@@ -340,7 +335,6 @@
               </div>
             </div>
           </td>
-          <td class="c muted" style="font-size:11px;">{% if sku_val != blank %}{{ sku_val }}{% else %}—{% endif %}</td>
           <td class="c"><span class="it-qty">{{ line_item.shipping_quantity }}</span>{% if line_item.shipping_quantity != line_item.quantity %}<span class="muted" style="font-size:11px;"> / {{ line_item.quantity }}</span>{% endif %}</td>
           {% if show_prices %}
             <td class="l">{% if matched %}{{ unit_price | money }}{% else %}—{% endif %}</td>
@@ -358,8 +352,8 @@
   <!-- 5. SUMMARY + NOTE -->
   <div class="sum-wrap">
     <div class="note">
-      <h4>ملاحظات · Notes</h4>
-      <p>{% if order.note != blank %}{{ order.note }}{% else %}يُرجى التحقق من سلامة المنتجات عند الاستلام.{% endif %}</p>
+      <h4>ملاحظة العميل · Customer Note</h4>
+      <p>{% if order.note != blank %}{{ order.note }}{% else %}—{% endif %}</p>
     </div>
     {% if show_prices %}
     <div class="sum">
@@ -392,17 +386,11 @@
     {% endif %}
   </div>
 
-  <!-- 8. RETURNS -->
-  <div class="returns">
-    <h4>الإرجاع والاستبدال · Returns &amp; Exchanges</h4>
-    <p>يمكن إرجاع المنتجات غير المستخدمة خلال {{ returns_window }} من الاستلام مع الاحتفاظ بهذا الإيصال.<br/>Unused items may be returned within {{ returns_window }} of delivery — please keep this slip.</p>
-  </div>
-
-  <!-- 9. FOOTER -->
+  <!-- 8. FOOTER -->
   <div class="rule"><span class="dot sm"></span><span class="dot"></span><span class="dot sm"></span></div>
   <div class="foot">
     <div class="thanks">شكراً لثقتكم بـ{{ shop.name }} ✦</div>
-    <div class="links">{{ shop.domain }} &nbsp;·&nbsp; {{ store_phone }} &nbsp;·&nbsp; {{ shop.email }}</div>
+    <div class="links">{{ shop.domain }} &nbsp;·&nbsp; {{ store_phone }} &nbsp;·&nbsp; Instagram {{ store_instagram }}</div>
   </div>
 
 </div>
