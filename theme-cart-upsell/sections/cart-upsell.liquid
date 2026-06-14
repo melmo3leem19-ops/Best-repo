@@ -1,0 +1,150 @@
+{%- comment -%}
+  ═══════════════════════════════════════════════════════════════════════════
+  CART UPSELL — section wrapper for snippets/cart-upsell.liquid
+
+  Two roles:
+    1. Theme Editor surface — exposes every control (content, layout, styling,
+       behavior, product data) and renders the upsell.
+    2. Recommendations API target — when the storefront requests
+       /recommendations/products?section_id=cart-upsell&product_id=ID&limit=N
+       Shopify populates `recommendations`; we forward it to the snippet so the
+       returned HTML can be swapped into the live cart drawer by cart-upsell.js.
+
+  Place this section inside the cart drawer (Dawn-style: add to the
+  `cart-drawer`/`cart` section group), or render the snippet directly:
+      {% render 'cart-upsell', st: section.settings, section_id: section.id %}
+  ═══════════════════════════════════════════════════════════════════════════
+{%- endcomment -%}
+
+{% render 'cart-upsell',
+  st: section.settings,
+  section_id: section.id,
+  recommendations: recommendations
+%}
+
+{% schema %}
+{
+  "name": "Cart Upsell",
+  "tag": "section",
+  "class": "section-cart-upsell",
+  "limit": 3,
+  "settings": [
+    { "type": "header", "content": "Content" },
+    { "type": "text", "id": "title", "label": "Title", "default": "You May Also Need", "info": "EN · e.g. Frequently Bought Together / Complete Your Order / Recommended For You" },
+    { "type": "text", "id": "title_ar", "label": "Title (Arabic)", "default": "قد تحتاج أيضاً", "info": "AR · منتجات مقترحة / أكمل طلبك / ننصحك بهذه المنتجات" },
+    { "type": "text", "id": "subtitle", "label": "Subtitle" },
+    { "type": "text", "id": "subtitle_ar", "label": "Subtitle (Arabic)" },
+
+    { "type": "header", "content": "Product source" },
+    { "type": "select", "id": "product_source", "label": "Source", "default": "automatic", "options": [
+      { "value": "manual", "label": "Manual product selection" },
+      { "value": "collection", "label": "Collection based" },
+      { "value": "automatic", "label": "Automatic recommendations (Shopify API)" },
+      { "value": "related", "label": "Related products" },
+      { "value": "metafield", "label": "Metafield driven" }
+    ]},
+    { "type": "product_list", "id": "products", "label": "Products (Manual)", "limit": 12 },
+    { "type": "collection", "id": "collection", "label": "Collection (Collection based)" },
+    { "type": "select", "id": "related_match", "label": "Related match by", "default": "collection", "options": [
+      { "value": "collection", "label": "Collection" },
+      { "value": "product_type", "label": "Product type" },
+      { "value": "vendor", "label": "Vendor" },
+      { "value": "tags", "label": "Tags" }
+    ], "info": "Collection matches server-side; others use the Shopify Recommendations API." },
+    { "type": "text", "id": "metafield_key", "label": "Metafield (namespace.key)", "default": "custom.cart_upsell", "info": "Product list metafield read from items already in the cart." },
+    { "type": "range", "id": "max_products", "label": "Max products", "min": 2, "max": 16, "step": 1, "default": 8 },
+    { "type": "checkbox", "id": "hide_sold_out", "label": "Hide sold-out products", "default": false },
+
+    { "type": "header", "content": "Placement", "info": "Where the upsell sits inside the cart drawer." },
+    { "type": "select", "id": "position", "label": "Position", "default": "above_checkout", "options": [
+      { "value": "above_items", "label": "Above cart items" },
+      { "value": "below_items", "label": "Below cart items" },
+      { "value": "above_checkout", "label": "Above checkout button" },
+      { "value": "below_checkout", "label": "Below checkout button" }
+    ], "info": "If you rendered the snippet at a fixed spot, this re-anchors it via JS." },
+
+    { "type": "header", "content": "Layout" },
+    { "type": "select", "id": "layout_style", "label": "Layout style", "default": "carousel", "options": [
+      { "value": "carousel", "label": "Horizontal carousel" },
+      { "value": "list", "label": "Vertical list" },
+      { "value": "grid2", "label": "Grid 2 columns" },
+      { "value": "compact", "label": "Compact mini cards" },
+      { "value": "premium", "label": "Premium product cards" }
+    ]},
+    { "type": "range", "id": "desktop_columns", "label": "Cards per row (desktop)", "min": 1, "max": 4, "step": 1, "default": 2 },
+    { "type": "range", "id": "mobile_columns", "label": "Cards per row (mobile)", "min": 1, "max": 3, "step": 1, "default": 1 },
+    { "type": "select", "id": "image_ratio", "label": "Image ratio", "default": "square", "options": [
+      { "value": "square", "label": "Square (1:1)" },
+      { "value": "portrait", "label": "Portrait (4:5)" },
+      { "value": "landscape", "label": "Landscape (3:2)" },
+      { "value": "natural", "label": "Natural" }
+    ]},
+
+    { "type": "header", "content": "Card styling" },
+    { "type": "color", "id": "color_card_bg", "label": "Card background", "default": "#ffffff" },
+    { "type": "color", "id": "color_border", "label": "Border", "default": "#e6e2da" },
+    { "type": "color", "id": "color_text", "label": "Text", "default": "#141414" },
+    { "type": "color", "id": "color_accent", "label": "Accent / buttons", "default": "#141414" },
+    { "type": "color", "id": "color_accent_text", "label": "Button text", "default": "#ffffff" },
+    { "type": "color", "id": "color_savings", "label": "Savings highlight", "default": "#0a7d36" },
+    { "type": "color", "id": "color_badge_bg", "label": "Discount badge bg", "default": "#c0392b" },
+    { "type": "color", "id": "color_badge_text", "label": "Discount badge text", "default": "#ffffff" },
+    { "type": "range", "id": "card_radius", "label": "Border radius", "min": 0, "max": 28, "step": 1, "default": 12, "unit": "px" },
+    { "type": "range", "id": "border_width", "label": "Border width", "min": 0, "max": 4, "step": 1, "default": 1, "unit": "px" },
+    { "type": "select", "id": "card_shadow", "label": "Card shadow", "default": "soft", "options": [
+      { "value": "none", "label": "None" },
+      { "value": "soft", "label": "Soft" },
+      { "value": "medium", "label": "Medium" },
+      { "value": "strong", "label": "Strong" }
+    ]},
+    { "type": "select", "id": "hover_effect", "label": "Hover effect", "default": "lift", "options": [
+      { "value": "none", "label": "None" },
+      { "value": "lift", "label": "Lift" },
+      { "value": "zoom", "label": "Image zoom" },
+      { "value": "glow", "label": "Glow" }
+    ]},
+    { "type": "range", "id": "product_spacing", "label": "Product spacing", "min": 4, "max": 28, "step": 2, "default": 12, "unit": "px" },
+    { "type": "range", "id": "heading_size", "label": "Title size", "min": 12, "max": 28, "step": 1, "default": 16, "unit": "px" },
+    { "type": "range", "id": "body_size", "label": "Body size", "min": 11, "max": 18, "step": 1, "default": 13, "unit": "px" },
+
+    { "type": "header", "content": "Product information" },
+    { "type": "checkbox", "id": "show_image", "label": "Product image", "default": true },
+    { "type": "checkbox", "id": "show_title", "label": "Product title", "default": true },
+    { "type": "checkbox", "id": "show_vendor", "label": "Product vendor", "default": false },
+    { "type": "checkbox", "id": "show_price", "label": "Product price", "default": true },
+    { "type": "checkbox", "id": "show_compare_price", "label": "Compare-at price", "default": true },
+    { "type": "checkbox", "id": "show_discount_badge", "label": "Discount badge", "default": true },
+    { "type": "checkbox", "id": "show_inventory", "label": "Inventory status", "default": false },
+    { "type": "checkbox", "id": "show_rating", "label": "Product rating", "default": false },
+    { "type": "text", "id": "rating_metafield", "label": "Rating metafield", "default": "reviews.rating" },
+    { "type": "text", "id": "rating_count_metafield", "label": "Rating count metafield", "default": "reviews.rating_count" },
+    { "type": "checkbox", "id": "show_variant_selector", "label": "Variant selector", "default": true },
+    { "type": "checkbox", "id": "show_quantity", "label": "Quantity selector", "default": false },
+
+    { "type": "header", "content": "Variant picker" },
+    { "type": "select", "id": "variant_picker_style", "label": "Picker style", "default": "dropdown", "options": [
+      { "value": "dropdown", "label": "Dropdown" },
+      { "value": "buttons", "label": "Buttons" },
+      { "value": "swatch", "label": "Color swatches + buttons" }
+    ]},
+
+    { "type": "header", "content": "Behavior (carousel)" },
+    { "type": "checkbox", "id": "autoplay", "label": "Autoplay", "default": false },
+    { "type": "range", "id": "autoplay_speed", "label": "Autoplay speed", "min": 2, "max": 10, "step": 1, "default": 5, "unit": "s" },
+    { "type": "checkbox", "id": "infinite_loop", "label": "Infinite loop", "default": true },
+    { "type": "checkbox", "id": "show_arrows", "label": "Show arrows", "default": true },
+    { "type": "checkbox", "id": "show_dots", "label": "Show dots", "default": false },
+    { "type": "range", "id": "scroll_speed", "label": "Scroll speed", "min": 150, "max": 600, "step": 50, "default": 300, "unit": "ms" },
+
+    { "type": "header", "content": "Add to cart" },
+    { "type": "checkbox", "id": "redirect_to_cart", "label": "Go to cart page after adding", "default": false },
+    { "type": "range", "id": "debounce_ms", "label": "Cart update debounce", "min": 0, "max": 800, "step": 50, "default": 350, "unit": "ms" },
+
+    { "type": "header", "content": "Language & direction" },
+    { "type": "checkbox", "id": "force_rtl", "label": "Force RTL layout", "info": "RTL is automatic for Arabic. Tick to force-mirror in other languages.", "default": false }
+  ],
+  "presets": [
+    { "name": "Cart Upsell" }
+  ]
+}
+{% endschema %}

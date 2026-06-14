@@ -1,0 +1,26 @@
+{
+  "cart_upsell": {
+    "add_to_cart": "Add to Cart",
+    "add_to_cart_named": "Add {{ title }} to cart",
+    "added": "Added",
+    "loading": "Loading…",
+    "sold_out": "Sold Out",
+    "out_of_stock": "Out of Stock",
+    "in_stock": "In stock",
+    "low_stock": "Only {{ count }} left",
+    "only_left": "Only {{ count }} left",
+    "select_option": "Select Option",
+    "quantity": "Quantity",
+    "increase": "Increase quantity",
+    "decrease": "Decrease quantity",
+    "view_product": "View Product",
+    "recommended_for_you": "Recommended For You",
+    "cart_error": "Couldn't add to cart. Please try again.",
+    "no_recommendations": "No recommendations right now.",
+    "save_percent": "Save {{ percent }}%",
+    "rating_label": "Rated {{ rating }} out of 5 from {{ count }} reviews",
+    "previous": "Previous",
+    "next": "Next",
+    "pagination": "Recommendations pagination"
+  }
+}

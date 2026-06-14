@@ -1,0 +1,26 @@
+{
+  "cart_upsell": {
+    "add_to_cart": "أضف إلى السلة",
+    "add_to_cart_named": "أضف {{ title }} إلى السلة",
+    "added": "تمت الإضافة",
+    "loading": "جارٍ التحميل…",
+    "sold_out": "نفد المخزون",
+    "out_of_stock": "غير متوفر",
+    "in_stock": "متوفر",
+    "low_stock": "بقي {{ count }} فقط",
+    "only_left": "بقي {{ count }} فقط",
+    "select_option": "اختر خياراً",
+    "quantity": "الكمية",
+    "increase": "زيادة الكمية",
+    "decrease": "إنقاص الكمية",
+    "view_product": "عرض المنتج",
+    "recommended_for_you": "ننصحك بهذه المنتجات",
+    "cart_error": "تعذّرت الإضافة إلى السلة. حاول مرة أخرى.",
+    "no_recommendations": "لا توجد توصيات حالياً.",
+    "save_percent": "وفّر {{ percent }}%",
+    "rating_label": "التقييم {{ rating }} من 5 من {{ count }} مراجعة",
+    "previous": "السابق",
+    "next": "التالي",
+    "pagination": "تنقّل التوصيات"
+  }
+}

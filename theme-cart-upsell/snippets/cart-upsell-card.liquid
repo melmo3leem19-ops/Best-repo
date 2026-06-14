@@ -1,0 +1,208 @@
+{%- comment -%}
+  ───────────────────────────────────────────────────────────────────────────
+  Cart Upsell — single product card.
+
+  Params:
+    product       (product)  required
+    st            (object)   section settings (presentation + toggles)
+    locale_is_ar  (boolean)  Arabic → RTL copy
+    index         (number)   position in list (for lazy-load priority)
+
+  All cart prices come from the variant at add-time; prices printed here are
+  for display only. No hardcoded UI strings — everything goes through `t`.
+  ───────────────────────────────────────────────────────────────────────────
+{%- endcomment -%}
+
+{%- liquid
+  assign first_variant = product.selected_or_first_available_variant
+  assign has_variants = false
+  if product.variants.size > 1
+    assign has_variants = true
+  endif
+
+  assign image_ratio = st.image_ratio | default: 'square'
+
+  # Rating metafield, e.g. "reviews.rating" → namespace.key
+  assign rating_value = 0
+  assign rating_count = 0
+  if st.show_rating
+    assign rk = st.rating_metafield | default: 'reviews.rating' | split: '.'
+    assign r_ns = rk[0]
+    assign r_key = rk[1]
+    assign rating_obj = product.metafields[r_ns][r_key]
+    if rating_obj != blank
+      if rating_obj.value.rating
+        assign rating_value = rating_obj.value.rating | times: 1.0
+      else
+        assign rating_value = rating_obj.value | times: 1.0
+      endif
+    endif
+    assign ck = st.rating_count_metafield | default: 'reviews.rating_count' | split: '.'
+    assign c_ns = ck[0]
+    assign c_key = ck[1]
+    assign count_obj = product.metafields[c_ns][c_key]
+    if count_obj != blank
+      assign rating_count = count_obj.value | times: 1
+    endif
+  endif
+
+  assign on_sale = false
+  if first_variant.compare_at_price > first_variant.price
+    assign on_sale = true
+    assign save_amount = first_variant.compare_at_price | minus: first_variant.price
+    assign save_pct = save_amount | times: 100.0 | divided_by: first_variant.compare_at_price | round
+  endif
+-%}
+
+<article
+  class="cu-card cu-card--ratio-{{ image_ratio }} {% if product.available == false %}cu-card--oos{% endif %}"
+  data-cu-card
+  data-product-id="{{ product.id }}"
+  data-product-url="{{ product.url }}"
+  data-product-title="{{ product.title | escape }}"
+  data-image="{{ first_variant.image | default: product.featured_image | image_url: width: 200 }}"
+  data-variant-style="{{ st.variant_picker_style | default: 'dropdown' }}"
+  data-variants="{%- capture vjson -%}[{%- for v in product.variants -%}{"id":{{ v.id }},"title":{{ v.title | json }},"available":{{ v.available }},"price":{{ v.price }},"compare_at":{{ v.compare_at_price | default: 0 }},"qty":{{ v.inventory_quantity | default: -1 }},"policy":{{ v.inventory_policy | json }},"managed":{% if v.inventory_management %}true{% else %}false{% endif %},"options":{{ v.options | json }},"image":{{ v.image | image_url: width: 200 | json }}}{%- unless forloop.last -%},{%- endunless -%}{%- endfor -%}]{%- endcapture -%}{{ vjson | escape }}"
+  data-options="{{ product.options_with_values | json | escape }}"
+>
+  {%- if st.show_image -%}
+    <a class="cu-card__media" href="{{ product.url }}" tabindex="-1" aria-hidden="true" data-cu-media>
+      {%- if st.show_discount_badge and on_sale -%}
+        <span class="cu-card__badge" data-cu-badge>{{ 'cart_upsell.save_percent' | t: percent: save_pct }}</span>
+      {%- endif -%}
+      {%- assign card_image = first_variant.image | default: product.featured_image -%}
+      {%- if card_image != blank -%}
+        <img
+          class="cu-card__img"
+          src="{{ card_image | image_url: width: 320 }}"
+          srcset="{{ card_image | image_url: width: 160 }} 160w, {{ card_image | image_url: width: 320 }} 320w, {{ card_image | image_url: width: 480 }} 480w"
+          sizes="(max-width: 749px) 40vw, 180px"
+          alt="{{ card_image.alt | default: product.title | escape }}"
+          width="320"
+          height="{% if image_ratio == 'portrait' %}400{% elsif image_ratio == 'landscape' %}240{% else %}320{% endif %}"
+          {% if index and index < 2 %}loading="eager" fetchpriority="low"{% else %}loading="lazy"{% endif %}
+          decoding="async"
+          data-cu-img
+        >
+      {%- else -%}
+        {{ 'product-1' | placeholder_svg_tag: 'cu-card__img cu-card__placeholder' }}
+      {%- endif -%}
+    </a>
+  {%- endif -%}
+
+  <div class="cu-card__body">
+    {%- if st.show_vendor and product.vendor != blank -%}
+      <p class="cu-card__vendor">{{ product.vendor }}</p>
+    {%- endif -%}
+
+    {%- if st.show_title -%}
+      <a class="cu-card__title" href="{{ product.url }}">{{ product.title }}</a>
+    {%- endif -%}
+
+    {%- if st.show_rating and rating_value > 0 -%}
+      <div class="cu-card__rating" role="img" aria-label="{{ 'cart_upsell.rating_label' | t: rating: rating_value, count: rating_count }}">
+        {%- assign full = rating_value | floor -%}
+        {%- for i in (1..5) -%}
+          {%- if i <= full -%}{% render 'cart-upsell-icon', name: 'star' %}{%- else -%}{% render 'cart-upsell-icon', name: 'star-empty' %}{%- endif -%}
+        {%- endfor -%}
+        {%- if rating_count > 0 -%}<span class="cu-card__rating-count">({{ rating_count }})</span>{%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if st.show_price -%}
+      <p class="cu-card__price" data-cu-price>
+        {%- if st.show_compare_price and on_sale -%}
+          <span class="cu-card__price-sale">{{ first_variant.price | money }}</span>
+          <s class="cu-card__price-was">{{ first_variant.compare_at_price | money }}</s>
+        {%- else -%}
+          {{ first_variant.price | money }}
+        {%- endif -%}
+      </p>
+    {%- endif -%}
+
+    {%- if st.show_inventory -%}
+      {%- liquid
+        assign inv_state = 'in'
+        if product.available == false
+          assign inv_state = 'out'
+        elsif first_variant.inventory_management != blank and first_variant.inventory_policy != 'continue' and first_variant.inventory_quantity > 0 and first_variant.inventory_quantity <= 5
+          assign inv_state = 'low'
+        endif
+      -%}
+      <p class="cu-card__inventory cu-card__inventory--{{ inv_state }}" data-cu-inventory aria-live="polite">
+        {%- if inv_state == 'out' -%}{{ 'cart_upsell.out_of_stock' | t }}
+        {%- elsif inv_state == 'low' -%}{{ 'cart_upsell.low_stock' | t: count: first_variant.inventory_quantity }}
+        {%- else -%}{{ 'cart_upsell.in_stock' | t }}{%- endif -%}
+      </p>
+    {%- endif -%}
+
+    {%- comment -%} Variant selector — rendered by Liquid, wired by JS {%- endcomment -%}
+    {%- if st.show_variant_selector and has_variants and product.available -%}
+      <div class="cu-card__variants" data-cu-variants>
+        {%- if st.variant_picker_style == 'dropdown' -%}
+          <select class="cu-card__variant-select" data-cu-variant-select aria-label="{{ 'cart_upsell.select_option' | t }}">
+            {%- for v in product.variants -%}
+              <option value="{{ v.id }}" data-price="{{ v.price }}" {% unless v.available %}disabled{% endunless %}>
+                {{ v.title }}{% unless v.available %} — {{ 'cart_upsell.sold_out' | t }}{% endunless %}
+              </option>
+            {%- endfor -%}
+          </select>
+        {%- else -%}
+          {%- comment -%} Swatches / buttons: one group per option {%- endcomment -%}
+          {%- for option in product.options_with_values -%}
+            {%- liquid
+              assign opt_down = option.name | downcase
+              assign is_color = false
+              if opt_down contains 'color' or opt_down contains 'colour' or opt_down contains 'لون'
+                assign is_color = true
+              endif
+              assign render_swatch = false
+              if st.variant_picker_style == 'swatch' and is_color
+                assign render_swatch = true
+              endif
+            -%}
+            <fieldset class="cu-card__opt" data-cu-opt data-opt-position="{{ option.position }}">
+              <legend class="cu-card__opt-name">{{ option.name }}</legend>
+              <div class="cu-card__opt-values {% if render_swatch %}cu-card__opt-values--swatch{% else %}cu-card__opt-values--button{% endif %}">
+                {%- for value in option.values -%}
+                  <label class="cu-card__opt-value {% if render_swatch %}cu-card__swatch{% else %}cu-card__chip{% endif %}"
+                    {% if render_swatch %}style="--cu-swatch: {{ value | downcase | split: ' ' | last }};"{% endif %}
+                    title="{{ value | escape }}">
+                    <input type="radio" name="cu-{{ product.id }}-{{ option.position }}" value="{{ value | escape }}"
+                      {% if option.selected_value == value %}checked{% endif %} data-cu-opt-input>
+                    <span class="cu-card__opt-text">{{ value }}</span>
+                  </label>
+                {%- endfor -%}
+              </div>
+            </fieldset>
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class="cu-card__footer">
+      {%- if st.show_quantity and product.available -%}
+        <div class="cu-card__qty" data-cu-qty-wrap>
+          <button type="button" class="cu-card__qty-btn" data-cu-qty-minus aria-label="{{ 'cart_upsell.decrease' | t }}">−</button>
+          <input type="number" class="cu-card__qty-input" data-cu-qty value="1" min="1" inputmode="numeric"
+            aria-label="{{ 'cart_upsell.quantity' | t }}">
+          <button type="button" class="cu-card__qty-btn" data-cu-qty-plus aria-label="{{ 'cart_upsell.increase' | t }}">+</button>
+        </div>
+      {%- endif -%}
+
+      {%- if product.available -%}
+        <button type="button" class="cu-card__add" data-cu-add
+          data-variant-id="{{ first_variant.id }}"
+          aria-label="{{ 'cart_upsell.add_to_cart_named' | t: title: product.title }}">
+          <span class="cu-card__add-label" data-cu-add-label>{{ 'cart_upsell.add_to_cart' | t }}</span>
+          <span class="cu-card__add-spinner" data-cu-add-spinner aria-hidden="true">{% render 'cart-upsell-icon', name: 'spinner' %}</span>
+          <span class="cu-card__add-check" data-cu-add-check aria-hidden="true">{% render 'cart-upsell-icon', name: 'check' %}</span>
+        </button>
+      {%- else -%}
+        <button type="button" class="cu-card__add cu-card__add--disabled" disabled>
+          {{ 'cart_upsell.sold_out' | t }}
+        </button>
+      {%- endif -%}
+    </div>
+  </div>
+</article>

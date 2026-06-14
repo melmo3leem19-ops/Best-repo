@@ -1,0 +1,303 @@
+/**
+ * Cart Upsell — “You May Also Need”
+ *
+ * RTL: CSS logical properties throughout (inline-start/end) so dir="rtl"
+ * mirrors layout with no second stylesheet. Theming is driven by custom
+ * properties set inline by snippets/cart-upsell.liquid from customizer
+ * settings. Images reserve space via aspect-ratio to avoid CLS.
+ */
+
+.cu {
+  display: block;
+  color: var(--cu-text, #141414);
+  font-size: var(--cu-body-size, 13px);
+  margin-block: 16px;
+  text-align: start;
+  /* contain layout/paint so the drawer stays smooth while the track scrolls */
+  contain: content;
+}
+
+.cu *,
+.cu *::before,
+.cu *::after { box-sizing: border-box; }
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.cu__header { margin-block-end: 10px; padding-inline: 2px; }
+.cu__title {
+  margin: 0;
+  font-size: var(--cu-heading-size, 16px);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+.cu__subtitle {
+  margin: 2px 0 0;
+  font-size: calc(var(--cu-body-size, 13px) - 1px);
+  color: color-mix(in srgb, var(--cu-text, #141414) 62%, transparent);
+}
+
+/* ── Viewport / track ────────────────────────────────────────────────── */
+.cu__viewport { position: relative; }
+.cu__track {
+  display: grid;
+  gap: var(--cu-gap, 12px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cu__cell { min-width: 0; }
+
+/* Layout: horizontal carousel — scroll-snap, momentum, touch-swipe native */
+.cu--layout-carousel .cu__track {
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - (var(--cu-cols-mobile, 1) - 1) * var(--cu-gap, 12px)) / var(--cu-cols-mobile, 1));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  padding-block-end: 2px;
+}
+.cu--layout-carousel .cu__track::-webkit-scrollbar { display: none; }
+.cu--layout-carousel .cu__cell { scroll-snap-align: start; }
+
+/* Layout: vertical list */
+.cu--layout-list .cu__track { grid-auto-flow: row; }
+.cu--layout-list .cu-card { display: grid; grid-template-columns: 72px 1fr; align-items: center; }
+.cu--layout-list .cu-card__media { aspect-ratio: 1 / 1; }
+
+/* Layout: grid 2 columns (responsive via --cu-cols) */
+.cu--layout-grid2 .cu__track,
+.cu--layout-premium .cu__track {
+  grid-template-columns: repeat(var(--cu-cols-mobile, 1), minmax(0, 1fr));
+}
+
+/* Layout: compact mini cards */
+.cu--layout-compact .cu__track { grid-auto-flow: row; }
+.cu--layout-compact .cu-card { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; padding: 6px; }
+.cu--layout-compact .cu-card__media { aspect-ratio: 1 / 1; }
+.cu--layout-compact .cu-card__body { padding: 0; }
+.cu--layout-compact .cu-card__title { font-size: calc(var(--cu-body-size, 13px)); }
+.cu--layout-compact .cu-card__add { inline-size: auto; padding-inline: 12px; }
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+.cu-card {
+  background: var(--cu-card-bg, #fff);
+  border: var(--cu-border-width, 1px) solid var(--cu-border, #e6e2da);
+  border-radius: var(--cu-radius, 12px);
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  block-size: 100%;
+}
+.cu-card--oos { opacity: .62; }
+
+/* Shadow variants */
+.cu--shadow-soft .cu-card { box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.cu--shadow-medium .cu-card { box-shadow: 0 4px 14px rgba(0,0,0,.10); }
+.cu--shadow-strong .cu-card { box-shadow: 0 10px 28px rgba(0,0,0,.16); }
+
+/* Hover variants (pointer devices only) */
+@media (hover: hover) {
+  .cu--hover-lift .cu-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,.14); }
+  .cu--hover-glow .cu-card:hover { border-color: var(--cu-accent, #141414); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cu-accent,#141414) 30%, transparent); }
+  .cu--hover-zoom .cu-card:hover .cu-card__img { transform: scale(1.06); }
+}
+
+.cu-card__media {
+  position: relative;
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 1 / 1;
+  background: color-mix(in srgb, var(--cu-text,#141414) 4%, transparent);
+  overflow: hidden;
+}
+.cu-card--ratio-portrait .cu-card__media { aspect-ratio: 4 / 5; }
+.cu-card--ratio-landscape .cu-card__media { aspect-ratio: 3 / 2; }
+.cu-card--ratio-natural .cu-card__media { aspect-ratio: auto; }
+.cu-card__img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .3s ease;
+}
+.cu-card__placeholder { inline-size: 100%; block-size: 100%; }
+
+.cu-card__badge {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 6px;
+  background: var(--cu-badge-bg, #c0392b);
+  color: var(--cu-badge-text, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 999px;
+  z-index: 1;
+}
+
+.cu-card__body { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 4px; }
+.cu-card__vendor {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: color-mix(in srgb, var(--cu-text,#141414) 55%, transparent);
+}
+.cu-card__title {
+  margin: 0;
+  font-size: var(--cu-body-size, 13px);
+  font-weight: 500;
+  line-height: 1.3;
+  color: inherit;
+  text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cu-card__title:hover { text-decoration: underline; }
+
+.cu-card__rating { display: inline-flex; align-items: center; gap: 1px; color: #f5a623; }
+.cu-card__rating-count { margin-inline-start: 4px; font-size: 11px; color: color-mix(in srgb, var(--cu-text,#141414) 55%, transparent); }
+.cu-star--empty { color: color-mix(in srgb, var(--cu-text,#141414) 25%, transparent); }
+
+.cu-card__price { margin: 2px 0 0; font-weight: 600; font-size: var(--cu-body-size, 13px); }
+.cu-card__price-sale { color: var(--cu-savings, #0a7d36); }
+.cu-card__price-was { margin-inline-start: 6px; font-weight: 400; opacity: .6; }
+
+.cu-card__inventory { margin: 0; font-size: 11px; }
+.cu-card__inventory--in { color: var(--cu-savings, #0a7d36); }
+.cu-card__inventory--low { color: #c0392b; }
+.cu-card__inventory--out { color: color-mix(in srgb, var(--cu-text,#141414) 55%, transparent); }
+
+/* ── Variant pickers ─────────────────────────────────────────────────── */
+.cu-card__variants { display: flex; flex-direction: column; gap: 6px; margin-block: 4px; }
+.cu-card__variant-select {
+  inline-size: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  border: 1px solid var(--cu-border, #e6e2da);
+  border-radius: 8px;
+  background: var(--cu-card-bg, #fff);
+  color: inherit;
+}
+.cu-card__opt { border: 0; margin: 0; padding: 0; }
+.cu-card__opt-name { font-size: 11px; font-weight: 600; padding: 0; margin-block-end: 3px; }
+.cu-card__opt-values { display: flex; flex-wrap: wrap; gap: 5px; }
+.cu-card__opt-value input { position: absolute; opacity: 0; pointer-events: none; }
+.cu-card__chip .cu-card__opt-text {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 11px;
+  border: 1px solid var(--cu-border, #e6e2da);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.cu-card__chip input:checked + .cu-card__opt-text { background: var(--cu-accent,#141414); color: var(--cu-accent-text,#fff); border-color: var(--cu-accent,#141414); }
+.cu-card__chip input:focus-visible + .cu-card__opt-text { outline: 2px solid var(--cu-accent,#141414); outline-offset: 2px; }
+.cu-card__chip input:disabled + .cu-card__opt-text { opacity: .4; text-decoration: line-through; cursor: not-allowed; }
+
+.cu-card__swatch { cursor: pointer; }
+.cu-card__swatch .cu-card__opt-text {
+  inline-size: 22px; block-size: 22px; padding: 0; border-radius: 50%;
+  background: var(--cu-swatch, #ccc);
+  border: 1px solid color-mix(in srgb, #000 18%, transparent);
+  font-size: 0; overflow: hidden;
+}
+.cu-card__swatch input:checked + .cu-card__opt-text { box-shadow: 0 0 0 2px var(--cu-card-bg,#fff), 0 0 0 4px var(--cu-accent,#141414); }
+.cu-card__swatch input:focus-visible + .cu-card__opt-text { outline: 2px solid var(--cu-accent,#141414); outline-offset: 3px; }
+
+/* ── Footer / quantity / add ─────────────────────────────────────────── */
+.cu-card__footer { display: flex; align-items: center; gap: 8px; margin-block-start: 6px; }
+.cu-card__qty { display: inline-flex; align-items: center; border: 1px solid var(--cu-border,#e6e2da); border-radius: 999px; overflow: hidden; }
+.cu-card__qty-btn { inline-size: 26px; block-size: 28px; border: 0; background: transparent; color: inherit; font-size: 16px; cursor: pointer; line-height: 1; }
+.cu-card__qty-input { inline-size: 30px; border: 0; text-align: center; font-size: 12px; background: transparent; color: inherit; -moz-appearance: textfield; }
+.cu-card__qty-input::-webkit-outer-spin-button,
+.cu-card__qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.cu-card__add {
+  flex: 1 1 auto;
+  position: relative;
+  min-block-size: 36px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cu-accent, #141414);
+  color: var(--cu-accent-text, #fff);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity .15s ease, background .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.cu-card__add:hover { opacity: .9; }
+.cu-card__add:focus-visible { outline: 2px solid var(--cu-accent,#141414); outline-offset: 2px; }
+.cu-card__add:disabled,
+.cu-card__add--disabled { opacity: .5; cursor: not-allowed; }
+.cu-card__add-spinner,
+.cu-card__add-check { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; }
+.cu-card__add.is-loading .cu-card__add-label { visibility: hidden; }
+.cu-card__add.is-loading .cu-card__add-spinner { display: flex; }
+.cu-card__add.is-success { background: var(--cu-savings, #0a7d36); }
+.cu-card__add.is-success .cu-card__add-label { visibility: hidden; }
+.cu-card__add.is-success .cu-card__add-check { display: flex; }
+.cu-card__add.is-error { background: #c0392b; }
+
+.cu-icon--spin { animation: cu-spin .7s linear infinite; transform-origin: center; }
+@keyframes cu-spin { to { transform: rotate(360deg); } }
+
+/* ── Carousel controls ───────────────────────────────────────────────── */
+.cu__arrow {
+  position: absolute;
+  inset-block-start: calc(50% - 16px);
+  inline-size: 32px; block-size: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--cu-border,#e6e2da);
+  background: var(--cu-card-bg,#fff);
+  color: var(--cu-text,#141414);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+.cu__arrow:disabled { opacity: .35; cursor: default; }
+.cu__arrow--prev { inset-inline-start: -4px; }
+.cu__arrow--next { inset-inline-end: -4px; }
+/* Mirror the chevrons for RTL */
+[dir="rtl"] .cu__arrow .cu-icon { transform: scaleX(-1); }
+
+.cu__dots { display: flex; justify-content: center; gap: 6px; margin-block-start: 8px; }
+.cu__dot { inline-size: 7px; block-size: 7px; border-radius: 50%; border: 0; padding: 0; background: color-mix(in srgb, var(--cu-text,#141414) 25%, transparent); cursor: pointer; }
+.cu__dot.is-active { background: var(--cu-accent,#141414); inline-size: 18px; border-radius: 999px; }
+
+.cu__empty { padding: 16px; text-align: center; color: color-mix(in srgb, var(--cu-text,#141414) 55%, transparent); font-size: 12px; }
+
+.visually-hidden, .cu .visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cu-card, .cu-card__img, .cu-card__add { transition: none; }
+  .cu-icon--spin { animation-duration: 1.4s; }
+  .cu--layout-carousel .cu__track { scroll-behavior: auto; }
+}
+
+/* Desktop: honor configured columns */
+@media (min-width: 750px) {
+  .cu--layout-carousel .cu__track {
+    grid-auto-columns: calc((100% - (var(--cu-cols, 2) - 1) * var(--cu-gap, 12px)) / var(--cu-cols, 2));
+  }
+  .cu--layout-grid2 .cu__track,
+  .cu--layout-premium .cu__track {
+    grid-template-columns: repeat(var(--cu-cols, 2), minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,247 @@
+{%- comment -%}
+  ═══════════════════════════════════════════════════════════════════════════
+  CART UPSELL — “You May Also Need”
+  Theme-native cart-drawer upsell. Drop into the cart drawer to surface
+  relevant add-ons before checkout. Arabic (RTL) + English (LTR), automatic.
+
+  Render directly inside the cart drawer:
+      {% render 'cart-upsell', st: section.settings, section_id: section.id %}
+  …or let sections/cart-upsell.liquid wrap it for the Theme Editor.
+
+  Params:
+    st            (object)   settings (defaults applied below if omitted)
+    section_id    (string)   addressable id for the Recommendations API
+    locale_is_ar  (boolean)  optional override; auto-detected otherwise
+    recommendations (object) optional — passed by the section when the
+                             Recommendations API renders it (automatic/related)
+
+  Product sources (st.product_source):
+    manual      — st.products            (server-rendered)
+    collection  — st.collection          (server-rendered)
+    metafield   — cart items' list metafield, default custom.cart_upsell
+    related     — seed product's collection match (server) or API (client)
+    automatic   — Shopify Recommendations API (client), seeded from the cart
+  No hardcoded strings — all copy via `t` (locales/*.default.json).
+  ═══════════════════════════════════════════════════════════════════════════
+{%- endcomment -%}
+
+{%- liquid
+  assign st = st | default: settings
+  assign source = st.product_source | default: 'automatic'
+  assign limit = st.max_products | default: 8
+
+  # ── Direction / locale ───────────────────────────────────────────────
+  if locale_is_ar == nil
+    assign locale_is_ar = false
+    if request.locale.iso_code == 'ar'
+      assign locale_is_ar = true
+    endif
+  endif
+  assign dir = 'ltr'
+  if locale_is_ar or st.force_rtl
+    assign dir = 'rtl'
+  endif
+
+  # ── Title / subtitle (Arabic overrides when present) ─────────────────
+  assign title = st.title | default: 'You May Also Need'
+  if locale_is_ar and st.title_ar != blank
+    assign title = st.title_ar
+  endif
+  assign subtitle = st.subtitle
+  if locale_is_ar and st.subtitle_ar != blank
+    assign subtitle = st.subtitle_ar
+  endif
+
+  # ── Already-in-cart ids (never upsell what's already added) ──────────
+  assign cart_ids = ''
+  for item in cart.items
+    assign cart_ids = cart_ids | append: ',' | append: item.product_id | append: ','
+  endfor
+
+  # ── Seed product for related / automatic (most recent line) ──────────
+  assign seed_product = nil
+  if cart.items.size > 0
+    assign seed_product = cart.items.last.product
+  endif
+
+  assign layout = st.layout_style | default: 'carousel'
+-%}
+
+{%- comment -%} ── Resolve the product list (server-rendered sources) ── {%- endcomment -%}
+{%- liquid
+  assign products_to_show = nil
+  case source
+    when 'manual'
+      assign products_to_show = st.products
+    when 'collection'
+      if st.collection != blank
+        assign products_to_show = st.collection.products
+      endif
+    when 'related'
+      assign rel_match = st.related_match | default: 'collection'
+      if rel_match == 'collection' and seed_product and seed_product.collections.size > 0
+        assign products_to_show = seed_product.collections.first.products
+      endif
+    when 'metafield'
+      assign mf = st.metafield_key | default: 'custom.cart_upsell' | split: '.'
+      assign mf_ns = mf[0]
+      assign mf_key = mf[1]
+  endcase
+
+  # Recommendations API (automatic, or related when no collection match)
+  assign use_api = false
+  if source == 'automatic'
+    assign use_api = true
+  endif
+  if source == 'related' and products_to_show == nil
+    assign use_api = true
+  endif
+  if recommendations and recommendations.products.size > 0
+    assign products_to_show = recommendations.products
+    assign use_api = false
+  endif
+-%}
+
+{%- comment -%} ── Build the JS i18n + config payloads ── {%- endcomment -%}
+{%- capture i18n_json -%}
+{
+  "add_to_cart": {{ 'cart_upsell.add_to_cart' | t | json }},
+  "added": {{ 'cart_upsell.added' | t | json }},
+  "adding": {{ 'cart_upsell.loading' | t | json }},
+  "sold_out": {{ 'cart_upsell.sold_out' | t | json }},
+  "out_of_stock": {{ 'cart_upsell.out_of_stock' | t | json }},
+  "select_option": {{ 'cart_upsell.select_option' | t | json }},
+  "cart_error": {{ 'cart_upsell.cart_error' | t | json }},
+  "low_stock": {{ 'cart_upsell.low_stock' | t: count: '[n]' | json }},
+  "only_left": {{ 'cart_upsell.only_left' | t: count: '[n]' | json }}
+}
+{%- endcapture -%}
+
+{%- capture config_json -%}
+{
+  "source": {{ source | json }},
+  "useApi": {{ use_api }},
+  "intent": {{ st.related_match | default: 'related' | json }},
+  "limit": {{ limit }},
+  "seedId": {{ seed_product.id | default: 'null' }},
+  "layout": {{ layout | json }},
+  "autoplay": {% if st.autoplay %}true{% else %}false{% endif %},
+  "autoplaySpeed": {{ st.autoplay_speed | default: 5 | times: 1000 }},
+  "infiniteLoop": {% if st.infinite_loop %}true{% else %}false{% endif %},
+  "scrollSpeed": {{ st.scroll_speed | default: 300 }},
+  "debounce": {{ st.debounce_ms | default: 350 }},
+  "moneyFormat": {{ shop.money_format | json }},
+  "redirectToCart": {% if st.redirect_to_cart %}true{% else %}false{% endif %}
+}
+{%- endcapture -%}
+
+{%- comment -%} ── Inline theme tokens from customizer settings ── {%- endcomment -%}
+{%- capture css_vars -%}
+--cu-card-bg:{{ st.color_card_bg | default: '#ffffff' }};
+--cu-border:{{ st.color_border | default: '#e6e2da' }};
+--cu-text:{{ st.color_text | default: '#141414' }};
+--cu-accent:{{ st.color_accent | default: '#141414' }};
+--cu-accent-text:{{ st.color_accent_text | default: '#ffffff' }};
+--cu-savings:{{ st.color_savings | default: '#0a7d36' }};
+--cu-badge-bg:{{ st.color_badge_bg | default: '#c0392b' }};
+--cu-badge-text:{{ st.color_badge_text | default: '#ffffff' }};
+--cu-radius:{{ st.card_radius | default: 12 }}px;
+--cu-gap:{{ st.product_spacing | default: 12 }}px;
+--cu-heading-size:{{ st.heading_size | default: 16 }}px;
+--cu-body-size:{{ st.body_size | default: 13 }}px;
+--cu-cols:{{ st.desktop_columns | default: 2 }};
+--cu-cols-mobile:{{ st.mobile_columns | default: 1 }};
+--cu-border-width:{{ st.border_width | default: 1 }}px;
+{%- endcapture -%}
+
+<cart-upsell
+  class="cu cu--layout-{{ layout }} cu--shadow-{{ st.card_shadow | default: 'soft' }} cu--hover-{{ st.hover_effect | default: 'lift' }}"
+  dir="{{ dir }}"
+  data-cu-root
+  data-section-id="{{ section_id }}"
+  data-locale="{% if locale_is_ar %}ar{% else %}en{% endif %}"
+  data-currency="{{ cart.currency.iso_code | default: shop.currency }}"
+  style="{{ css_vars | strip_newlines }}"
+>
+  <script type="application/json" data-cu-i18n>{{ i18n_json }}</script>
+  <script type="application/json" data-cu-config>{{ config_json }}</script>
+
+  {%- if title != blank or subtitle != blank -%}
+    <div class="cu__header">
+      {%- if title != blank -%}<h3 class="cu__title">{{ title }}</h3>{%- endif -%}
+      {%- if subtitle != blank -%}<p class="cu__subtitle">{{ subtitle }}</p>{%- endif -%}
+    </div>
+  {%- endif -%}
+
+  <div class="cu__viewport" data-cu-viewport>
+    <div class="cu__track" data-cu-track role="list">
+      {%- if source == 'metafield' -%}
+        {%- assign rendered = 0 -%}
+        {%- assign seen = '' -%}
+        {%- for item in cart.items -%}
+          {%- assign linked = item.product.metafields[mf_ns][mf_key].value -%}
+          {%- if linked != blank -%}
+            {%- for p in linked -%}
+              {%- liquid
+                assign pid = p.id | append: ''
+                assign already = false
+                if cart_ids contains pid
+                  assign already = true
+                endif
+                if seen contains pid
+                  assign already = true
+                endif
+              -%}
+              {%- if already == false and rendered < limit and p.available -%}
+                <div class="cu__cell" role="listitem">{% render 'cart-upsell-card', product: p, st: st, locale_is_ar: locale_is_ar, index: rendered %}</div>
+                {%- assign rendered = rendered | plus: 1 -%}
+                {%- assign seen = seen | append: ',' | append: pid | append: ',' -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- elsif products_to_show != blank -%}
+        {%- assign rendered = 0 -%}
+        {%- for p in products_to_show -%}
+          {%- liquid
+            assign pid = p.id | append: ''
+            assign skip = false
+            if cart_ids contains pid
+              assign skip = true
+            endif
+            if st.hide_sold_out and p.available == false
+              assign skip = true
+            endif
+          -%}
+          {%- if skip == false and rendered < limit -%}
+            <div class="cu__cell" role="listitem">{% render 'cart-upsell-card', product: p, st: st, locale_is_ar: locale_is_ar, index: rendered %}</div>
+            {%- assign rendered = rendered | plus: 1 -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+
+  {%- comment -%} Carousel controls (carousel layout only; JS hides when not needed) {%- endcomment -%}
+  {%- if layout == 'carousel' -%}
+    {%- if st.show_arrows -%}
+      <button type="button" class="cu__arrow cu__arrow--prev" data-cu-prev aria-label="{{ 'cart_upsell.previous' | t }}" hidden>
+        {% render 'cart-upsell-icon', name: 'arrow-start' %}
+      </button>
+      <button type="button" class="cu__arrow cu__arrow--next" data-cu-next aria-label="{{ 'cart_upsell.next' | t }}" hidden>
+        {% render 'cart-upsell-icon', name: 'arrow-end' %}
+      </button>
+    {%- endif -%}
+    {%- if st.show_dots -%}
+      <div class="cu__dots" data-cu-dots role="tablist" aria-label="{{ 'cart_upsell.pagination' | t }}"></div>
+    {%- endif -%}
+  {%- endif -%}
+
+  {%- comment -%} Live region + skeleton for client-rendered sources {%- endcomment -%}
+  <p class="cu__status visually-hidden" data-cu-status role="status" aria-live="polite"></p>
+  <div class="cu__empty" data-cu-empty hidden>{{ 'cart_upsell.no_recommendations' | t }}</div>
+</cart-upsell>
+
+{%- comment -%} Load assets once per page, regardless of how many drawers render {%- endcomment -%}
+{{ 'cart-upsell.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'cart-upsell.js' | asset_url }}" defer></script>
